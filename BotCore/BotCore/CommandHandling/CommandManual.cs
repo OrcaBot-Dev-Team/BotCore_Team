@@ -95,7 +95,7 @@ namespace BotCoreNET.CommandHandling
                 int availableCommands = collection.ViewableCommands(context, guildContext);
                 if (availableCommands > 0 && collectionAllowed)
                 {
-                    helpFields.Add(Macros.EmbedField($"Collection \"{collection.Name}\"", $"{availableCommands} commands.{(string.IsNullOrEmpty(collection.Description) ? string.Empty : $" {collection.Description}.")} Use `{MessageHandler.Prefix}man:{collection.Name}` to see a summary of commands in this command family!", true));
+                    helpFields.Add(Macros.EmbedField($"Collection \"{collection.Name}\"", $"{availableCommands} commands.{(string.IsNullOrEmpty(collection.Description) ? string.Empty : $" {collection.Description}.")} Use `{MessageHandler.CommandParser.CommandSyntax("man")}` to see a summary of commands in this command family!", true));
                 }
             }
 

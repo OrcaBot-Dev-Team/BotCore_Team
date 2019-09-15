@@ -11,7 +11,7 @@ namespace BotCoreNET.CommandHandling
 {
     internal static class MessageHandler
     {
-        public static string Prefix { get; private set; }
+        internal static ICommandParser CommandParser;
 
         internal static Task Client_MessageReceived(SocketMessage arg)
         {
@@ -20,33 +20,45 @@ namespace BotCoreNET.CommandHandling
             if (userMessage != null)
             {
                 SocketTextChannel guildChannel = userMessage.Channel as SocketTextChannel;
+                bool isGuildContext = guildChannel != null;
 
-                if (userMessage.Content.StartsWith(Prefix) && userMessage.Content.Length > Prefix.Length)
+                bool ispotentialCommand;
+                if (isGuildContext)
                 {
-                    bool isGuildContext = guildChannel != null;
+                    ispotentialCommand = CommandParser.IsPotentialCommand(userMessage.Content, guildChannel.Guild.Id);
+                }
+                else
+                {
+                    ispotentialCommand = CommandParser.IsPotentialCommand(userMessage.Content);
+                }
 
+                if (ispotentialCommand)
+                {
                     IMessageContext messageContext;
+                    IGuildMessageContext guildMessageContext;
                     IDMCommandContext commandContext;
                     IGuildCommandContext guildCommandContext;
                     if (isGuildContext)
                     {
-                        messageContext = new GuildMessageContext(userMessage, guildChannel.Guild);
+                        guildMessageContext = new GuildMessageContext(userMessage, guildChannel.Guild);
+                        messageContext = guildMessageContext;
                     }
                     else
                     {
                         messageContext = new MessageContext(userMessage);
+                        guildMessageContext = null;
                     }
 
                     if (messageContext.IsDefined)
                     {
                         if (isGuildContext)
                         {
-                            guildCommandContext = new GuildCommandContext(messageContext as GuildMessageContext);
+                            guildCommandContext = new GuildCommandContext(guildMessageContext, CommandParser.ParseCommand(guildMessageContext));
                             commandContext = guildCommandContext;
                         }
                         else
                         {
-                            commandContext = new DMCommandContext(messageContext);
+                            commandContext = new DMCommandContext(messageContext, CommandParser.ParseCommand(messageContext));
                             guildCommandContext = null;
                         }
 
@@ -75,25 +87,10 @@ namespace BotCoreNET.CommandHandling
             return Task.CompletedTask;
         }
 
-
-        static MessageHandler()
-        {
-            BotVar defaultPrefix = new BotVar("prefix", "/");
-            BotVarManager.SetDefault(defaultPrefix);
-            OnBotVarUpdated(defaultPrefix);
-        }
-
         internal static void SetupBotVarSubscription()
         {
-            BotVarManager.SubscribeToBotVarUpdateEvent(OnBotVarUpdated, "prefix");
+            CommandParser.OnBotVarSetup();
         }
 
-        private static void OnBotVarUpdated(BotVar var)
-        {
-            if (var.Identifier == "prefix" && var.IsString)
-            {
-                Prefix = var.String;
-            }
-        }
     }
 }

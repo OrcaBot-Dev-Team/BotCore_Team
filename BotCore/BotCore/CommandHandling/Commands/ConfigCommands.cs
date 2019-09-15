@@ -38,22 +38,22 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
-            if (context.ArgumentCount == 0)
+            if (context.Arguments.TotalCount == 0)
             {
                 mode = CommandMode.listall;
                 return Task.FromResult(ArgumentParseResult.DefaultNoArguments);
             }
 
-            if (context.Argument.ToLower() == "save")
+            if (context.Arguments.First.ToLower() == "save")
             {
                 mode = CommandMode.save;
                 return Task.FromResult(ArgumentParseResult.SuccessfullParse);
             }
 
-            BotVarId = context.Argument;
+            BotVarId = context.Arguments.First;
             BotVarManager.TryGetBotVar(BotVarId, out BotVar);
 
-            if (context.ArgumentCount == 1)
+            if (context.Arguments.TotalCount == 1)
             {
                 mode = CommandMode.get;
                 if (BotVar.IsDefined)
@@ -70,9 +70,9 @@ namespace BotCoreNET.CommandHandling.Commands
                 mode = CommandMode.set;
             }
 
-            context.ArgPointer++;
+            context.Arguments.Index++;
 
-            if (context.Argument.ToLower() == "delete")
+            if (context.Arguments.First.ToLower() == "delete")
             {
                 mode = CommandMode.delete;
                 if (!BotVar.IsDefined)
@@ -85,12 +85,12 @@ namespace BotCoreNET.CommandHandling.Commands
                 }
             }
 
-            if (context.ArgumentCount == 2)
+            if (context.Arguments.TotalCount == 2)
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[2], "Cannot assign an empty value!"));
             }
 
-            if (!Enum.TryParse(context.Argument, true, out assignType))
+            if (!Enum.TryParse(context.Arguments.First, true, out assignType))
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[1]));
             }
@@ -100,9 +100,9 @@ namespace BotCoreNET.CommandHandling.Commands
                 return Task.FromResult(new ArgumentParseResult(Arguments[1]));
             }
 
-            context.ArgPointer++;
+            context.Arguments.Index++;
 
-            value = context.Argument;
+            value = context.Arguments.First;
 
             switch (assignType)
             {
@@ -251,24 +251,24 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
-            if (!ArgumentParsing.TryParseGuild(context, context.Argument, out SocketGuild guild))
+            if (!ArgumentParsing.TryParseGuild(context, context.Arguments.First, out SocketGuild guild))
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[0]));
             }
             BotVarCollection = BotVarManager.GetGuildBotVarCollection(guild.Id);
 
-            context.ArgPointer++;
+            context.Arguments.Index++;
 
-            if (context.ArgumentCount == 1)
+            if (context.Arguments.TotalCount == 1)
             {
                 mode = CommandMode.listall;
                 return Task.FromResult(ArgumentParseResult.DefaultNoArguments);
             }
 
-            BotVarId = context.Argument;
+            BotVarId = context.Arguments.First;
             BotVarCollection.TryGetBotVar(BotVarId, out BotVar);
 
-            if (context.ArgumentCount == 2)
+            if (context.Arguments.TotalCount == 2)
             {
                 mode = CommandMode.get;
                 if (BotVar.IsDefined)
@@ -285,9 +285,9 @@ namespace BotCoreNET.CommandHandling.Commands
                 mode = CommandMode.set;
             }
 
-            context.ArgPointer++;
+            context.Arguments.Index++;
 
-            if (context.Argument.ToLower() == "delete")
+            if (context.Arguments.First.ToLower() == "delete")
             {
                 mode = CommandMode.delete;
                 if (!BotVar.IsDefined)
@@ -300,12 +300,12 @@ namespace BotCoreNET.CommandHandling.Commands
                 }
             }
 
-            if (context.ArgumentCount == 2)
+            if (context.Arguments.TotalCount == 2)
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[2], "Cannot assign an empty value!"));
             }
 
-            if (!Enum.TryParse(context.Argument, true, out assignType))
+            if (!Enum.TryParse(context.Arguments.First, true, out assignType))
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[1]));
             }
@@ -315,9 +315,9 @@ namespace BotCoreNET.CommandHandling.Commands
                 return Task.FromResult(new ArgumentParseResult(Arguments[1]));
             }
 
-            context.ArgPointer++;
+            context.Arguments.Index++;
 
-            value = context.Argument;
+            value = context.Arguments.First;
 
             switch (assignType)
             {

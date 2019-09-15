@@ -39,14 +39,14 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArgumentsGuildAsync(IGuildCommandContext context)
         {
-            if (!ArgumentParsing.TryParseGuildTextChannel(context, context.Argument, out channel))
+            if (!ArgumentParsing.TryParseGuildTextChannel(context, context.Arguments.First, out channel))
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[0], "Failed to parse to a guild text channel!"));
             }
 
-            if (context.Message.Content.Length > Identifier.Length + context.Argument.Length + 2)
+            if (context.Message.Content.Length > Identifier.Length + context.Arguments.First.Length + 2)
             {
-                context.ArgPointer++;
+                context.Arguments.Index++;
                 string embedText = context.RemoveArgumentsFront(1).Replace("[3`]", "```");
 
                 if (JSONContainer.TryParse(embedText, out JSONContainer json, out string errormessage))
@@ -192,12 +192,12 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override async Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
-            if (!context.Argument.StartsWith("https://discordapp.com/channels/") || context.Argument.Length < 40)
+            if (!context.Arguments.First.StartsWith("https://discordapp.com/channels/") || context.Arguments.First.Length < 40)
             {
                 return new ArgumentParseResult(Arguments[0], "Not a valid message link! Failed Startswith or length test");
             }
 
-            string[] messageIdentifiers = context.Argument.Substring(32).Split('/');
+            string[] messageIdentifiers = context.Arguments.First.Substring(32).Split('/');
 
             if (messageIdentifiers.Length != 3)
             {
@@ -235,10 +235,10 @@ namespace BotCoreNET.CommandHandling.Commands
             }
 
             options.Clear();
-            if (context.ArgumentCount > 1)
+            if (context.Arguments.TotalCount > 1)
             {
 
-                context.ArgPointer++;
+                context.Arguments.Index++;
 
                 bool parseError = false;
                 foreach (string arg in context.Arguments)
@@ -256,7 +256,7 @@ namespace BotCoreNET.CommandHandling.Commands
                     }
                 }
 
-                context.ArgPointer--;
+                context.Arguments.Index--;
 
                 if (parseError)
                 {
@@ -362,12 +362,12 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override async Task<ArgumentParseResult> ParseArgumentsGuildAsync(IGuildCommandContext context)
         {
-            if (!context.Argument.StartsWith("https://discordapp.com/channels/") || context.Argument.Length < 40)
+            if (!context.Arguments.First.StartsWith("https://discordapp.com/channels/") || context.Arguments.First.Length < 40)
             {
                 return new ArgumentParseResult(Arguments[0], "Not a valid message link! Failed Startswith or length test");
             }
 
-            string[] messageIdentifiers = context.Argument.Substring(32).Split('/');
+            string[] messageIdentifiers = context.Arguments.First.Substring(32).Split('/');
 
             if (messageIdentifiers.Length != 3)
             {
@@ -408,9 +408,9 @@ namespace BotCoreNET.CommandHandling.Commands
                 return new ArgumentParseResult(Arguments[0], "Could not find the correct guild!");
             }
 
-            if (context.Message.Content.Length > Identifier.Length + context.Argument.Length + 2)
+            if (context.Message.Content.Length > Identifier.Length + context.Arguments.First.Length + 2)
             {
-                context.ArgPointer++;
+                context.Arguments.Index++;
                 string embedText = context.RemoveArgumentsFront(1).Replace("[3`]", "```");
 
                 if (JSONContainer.TryParse(embedText, out JSONContainer json, out string errormessage))

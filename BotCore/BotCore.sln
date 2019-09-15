@@ -10,13 +10,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BotCore Tester", "BotCore T
 		{2CBC2E29-97AE-440C-8CB8-89C1FE2B3056} = {2CBC2E29-97AE-440C-8CB8-89C1FE2B3056}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OrcaBot", "..\..\OrcaBot\OrcaBot\OrcaBot.csproj", "{E1CC6C1F-8925-4B79-92B6-08D7B1D77652}"
-	ProjectSection(ProjectDependencies) = postProject
-		{2CBC2E29-97AE-440C-8CB8-89C1FE2B3056} = {2CBC2E29-97AE-440C-8CB8-89C1FE2B3056}
-	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JSON_Serialization", "C:\Users\Joseph\source\repos\JSON_Serialization\JSON_Serialization\JSON_Serialization\JSON_Serialization.csproj", "{E2969607-B402-4834-ADBA-B0912EDFF6A9}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

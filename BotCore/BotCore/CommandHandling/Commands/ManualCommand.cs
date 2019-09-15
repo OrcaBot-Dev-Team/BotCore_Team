@@ -31,14 +31,14 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
-            if (context.ArgumentCount == 0)
+            if (context.Arguments.TotalCount == 0)
             {
                 identifier = null;
                 command = null;
                 return Task.FromResult(ArgumentParseResult.DefaultNoArguments);
             }
 
-            identifier = context.Argument;
+            identifier = context.Arguments.First;
             if (!CommandCollection.TryFindCommand(identifier, out command))
             {
                 if (!CommandCollection.AllCollections.TryFind(collection => { return collection.Name.ToLower() == identifier.ToLower(); }, out collection))

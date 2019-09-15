@@ -31,23 +31,10 @@ namespace BotCoreNET.CommandHandling
         public int MaximumArgumentCount { get; private set; }
         public bool RequireGuildContext { get; private set; }
         public CommandCollection Collection { get; internal set; }
-        public string Syntax { get { return $"{MessageHandler.Prefix}{Identifier}"; } }
+        public string Syntax => MessageHandler.CommandParser.CommandSyntax(Identifier);
 
         // Active properties
-        public string FullSyntax
-        {
-            get
-            {
-                if (Arguments.Length == 0)
-                {
-                    return $"{MessageHandler.Prefix}{Identifier}";
-                }
-                else
-                {
-                    return $"{MessageHandler.Prefix}{Identifier}:{Arguments.Join(", ")}";
-                }
-            }
-        }
+        public string FullSyntax => MessageHandler.CommandParser.CommandSyntax(Identifier, Arguments);
 
         protected void Register(string identifier, CommandCollection collection = null)
         {

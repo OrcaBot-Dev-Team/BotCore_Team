@@ -42,14 +42,18 @@ namespace BotCoreNET
             Client.MessageReceived += MessageHandler.Client_MessageReceived;
         }
 
-        public static void Run(string baseDirectory = null, MessageParser parserMethod = null, EmbedBuilder aboutEmbed = null)
+        public static void Run(string baseDirectory = null, ICommandParser commandParser = null, EmbedBuilder aboutEmbed = null)
         {
             SetupBotVarDefaults();
 
             Resources.Setup(baseDirectory);
-            if (parserMethod == null)
+            if (commandParser == null)
             {
-                CommandContext.CommandParser = CommandContext.DefaultMessageParser;
+                MessageHandler.CommandParser = new BuiltInCommandParser();
+            }
+            else
+            {
+                MessageHandler.CommandParser = commandParser;
             }
             AboutCommand.SetEmbed(aboutEmbed);
             runAsync().GetAwaiter().GetResult();

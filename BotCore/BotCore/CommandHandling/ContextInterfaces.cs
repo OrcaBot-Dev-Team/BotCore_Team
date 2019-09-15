@@ -31,10 +31,7 @@ namespace BotCoreNET.CommandHandling
     public interface ICommandContext : ICheckable
     {
         string ArgumentSection { get; }
-        string[] Arguments { get; }
-        int ArgumentCount { get; }
-        int ArgPointer { get; set; }
-        string Argument { get; }
+        IndexArray<string> Arguments { get; }
         Command InterpretedCommand { get; }
         CommandSearchResult CommandSearch { get; }
         string RemoveArgumentsFront(int count);

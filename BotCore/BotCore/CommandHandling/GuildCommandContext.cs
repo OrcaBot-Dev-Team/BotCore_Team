@@ -6,22 +6,16 @@ namespace BotCoreNET.CommandHandling
 {
     public class GuildCommandContext : GuildMessageContext, IGuildCommandContext
     {
-        private readonly CommandContext commandContext;
+        private readonly ICommandContext commandContext;
 
-        public GuildCommandContext(IGuildMessageContext context) : base(context.Message, context.Guild)
+        public GuildCommandContext(IGuildMessageContext messagecontext, ICommandContext commandcontext) : base(messagecontext.Message, messagecontext.Guild)
         {
-            commandContext = new CommandContext(context.Content);
+            commandContext = commandcontext;
         }
 
         public string ArgumentSection => commandContext.ArgumentSection;
 
-        public string[] Arguments => commandContext.Arguments;
-
-        public int ArgumentCount => commandContext.ArgumentCount;
-
-        public int ArgPointer { get => commandContext.ArgPointer; set => commandContext.ArgPointer = value; }
-
-        public string Argument => commandContext.Argument;
+        public IndexArray<string> Arguments => commandContext.Arguments;
 
         public Command InterpretedCommand => commandContext.InterpretedCommand;
 
