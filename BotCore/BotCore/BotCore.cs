@@ -43,9 +43,6 @@ namespace BotCoreNET
 
         public static void Run(string baseDirectory = null, ICommandParser commandParser = null, EmbedBuilder aboutEmbed = null)
         {
-            SetupBotVarDefaults();
-
-            Resources.Setup(baseDirectory);
             if (commandParser == null)
             {
                 MessageHandler.CommandParser = new BuiltInCommandParser();
@@ -54,6 +51,10 @@ namespace BotCoreNET
             {
                 MessageHandler.CommandParser = commandParser;
             }
+            Resources.Setup(baseDirectory);
+
+            SetupBotVarDefaults();
+
             AboutCommand.SetEmbed(aboutEmbed);
             runAsync().GetAwaiter().GetResult();
         }
@@ -79,10 +80,10 @@ namespace BotCoreNET
             new ManualCommand("man");
             new AboutCommand();
             CommandCollection embedCollection = new CommandCollection("Embed", "Commands for parsing, sending and editing embeds");
-            new SendEmbedCommand("embed send", embedCollection);
-            new PreviewEmbedCommand("embed preview", embedCollection);
-            new GetEmbedCommand("embed get", embedCollection);
-            new ReplaceEmbedCommand("embed replace", embedCollection);
+            new SendEmbedCommand("embed-send", embedCollection);
+            new PreviewEmbedCommand("embed-preview", embedCollection);
+            new GetEmbedCommand("embed-get", embedCollection);
+            new ReplaceEmbedCommand("embed-replace", embedCollection);
 
             ActionScheduler.AddSchedulerEntry(TimeSpan.FromSeconds(20), SetActivitySchedulerAction);
         }

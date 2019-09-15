@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BotCoreNET.CommandHandling
 {
-    class CommandContext : ICommandContext
+    public sealed class CommandContext : ICommandContext
     {
         public string ArgumentSection { get; private set; }
 

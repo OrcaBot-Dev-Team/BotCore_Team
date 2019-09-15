@@ -13,4 +13,8 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\JSON_Serialization\JSON_Serialization\JSON_Serialization\JSON_Serialization.csproj" />
+  </ItemGroup>
+
 </Project>

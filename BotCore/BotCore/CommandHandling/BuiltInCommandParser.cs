@@ -6,9 +6,10 @@ using System.Text;
 
 namespace BotCoreNET.CommandHandling
 {
-    class BuiltInCommandParser : ICommandParser
+    public class BuiltInCommandParser : ICommandParser
     {
-        private string prefix = "/";
+        public string Prefix => prefix;
+        string prefix = "/";
 
         public void OnBotVarSetup()
         {
@@ -23,12 +24,12 @@ namespace BotCoreNET.CommandHandling
             }
         }
 
-        public ICommandContext ParseCommand(IGuildMessageContext guildContext)
+        public virtual ICommandContext ParseCommand(IGuildMessageContext guildContext)
         {
             return ParseCommand(guildContext as IMessageContext);
         }
 
-        public ICommandContext ParseCommand(IMessageContext dmContext)
+        public virtual ICommandContext ParseCommand(IMessageContext dmContext)
         {
             string message = dmContext.Content.Substring(prefix.Length).Trim();
             string commandIdentifier;
@@ -100,18 +101,22 @@ namespace BotCoreNET.CommandHandling
             return new CommandContext(interpretedCommand, commandSearch, argumentSection, arguments);
         }
 
-        public bool IsPotentialCommand(string messageContent)
+        public virtual bool IsPotentialCommand(string messageContent)
         {
             return messageContent.StartsWith(prefix) && messageContent.Length > prefix.Length;
         }
 
-        public bool IsPotentialCommand(string messageContent, ulong guildId)
+        public virtual bool IsPotentialCommand(string messageContent, ulong guildId)
         {
             return messageContent.StartsWith(prefix) && messageContent.Length > prefix.Length;
         }
 
-        public string RemoveArgumentsFront(int count, string argumentSection)
+        public virtual string RemoveArgumentsFront(int count, string argumentSection)
         {
+            if (count == 0)
+            {
+                return argumentSection;
+            }
             for (int i = 0; i < argumentSection.Length; i++)
             {
                 bool isUnescapedComma = argumentSection[i] == ',';
@@ -124,19 +129,26 @@ namespace BotCoreNET.CommandHandling
                     count--;
                     if (count == 0)
                     {
-                        return argumentSection.Substring(i);
+                        if (i < argumentSection.Length - 1)
+                        {
+                            return argumentSection.Substring(i + 1);
+                        }
+                        else
+                        {
+                            return string.Empty;
+                        }
                     }
                 }
             }
             return null;
         }
 
-        public string CommandSyntax(string commandidentifier)
+        public virtual string CommandSyntax(string commandidentifier)
         {
-            return CommandSyntax(commandidentifier, new Argument[0]);
+            return $"{prefix}{commandidentifier}";
         }
 
-        public string CommandSyntax(string commandidentifier, Argument[] arguments)
+        public virtual string CommandSyntax(string commandidentifier, Argument[] arguments)
         {
             if (arguments.Length == 0)
             {
