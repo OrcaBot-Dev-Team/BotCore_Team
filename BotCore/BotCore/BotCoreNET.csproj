@@ -13,12 +13,4 @@
     <PackageReference Include="Discord.Net" Version="2.1.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="libs\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="C:\Users\Joseph\source\repos\JSON_Serialization\JSON_Serialization\JSON_Serialization\JSON_Serialization.csproj" />
-  </ItemGroup>
-
 </Project>

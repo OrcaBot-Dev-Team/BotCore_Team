@@ -3,7 +3,6 @@ using BotCoreNET.CommandHandling.Commands;
 using BotCoreNET.BotVars;
 using Discord;
 using Discord.WebSocket;
-using JSON;
 using System;
 using System.Collections.Generic;
 using System.IO;
