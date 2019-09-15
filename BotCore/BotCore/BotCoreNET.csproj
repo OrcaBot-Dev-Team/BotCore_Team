@@ -14,7 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\JSON_Serialization\JSON_Serialization\JSON_Serialization\JSON_Serialization.csproj" />
+    <Reference Include="JSON_Serialization">
+      <HintPath>..\..\..\JSON Parser\JSON_Serialization.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
