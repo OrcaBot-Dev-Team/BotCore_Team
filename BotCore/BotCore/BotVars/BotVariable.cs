@@ -75,6 +75,7 @@ namespace BotCoreNET.BotVars
             Generic = default;
         }
 
+
         public BotVar(string id, JSONContainer var)
         {
             Identifier = id;

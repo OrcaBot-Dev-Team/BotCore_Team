@@ -8,19 +8,18 @@ namespace BotCoreNET.CommandHandling
 {
     public class BuiltInCommandParser : ICommandParser
     {
-        public string Prefix => prefix;
-        string prefix = "/";
+        public string Prefix { get; private set; } = "/";
 
         public void OnBotVarSetup()
         {
-            BotVarManager.SubscribeToBotVarUpdateEvent(OnBotVarUpdate, "prefix");
+            BotVarManager.GlobalBotVars.SubscribeToBotVarUpdateEvent(OnBotVarUpdate, "prefix");
         }
 
-        private void OnBotVarUpdate(BotVar var)
+        private void OnBotVarUpdate(ulong guildId, BotVar var)
         {
             if (var.IsString && !string.IsNullOrEmpty(var.String))
             {
-                prefix = var.String;
+                Prefix = var.String;
             }
         }
 
@@ -31,14 +30,14 @@ namespace BotCoreNET.CommandHandling
 
         public virtual ICommandContext ParseCommand(IMessageContext dmContext)
         {
-            string message = dmContext.Content.Substring(prefix.Length).Trim();
+            string message = dmContext.Content.Substring(Prefix.Length).Trim();
             string commandIdentifier;
             string argumentSection;
             IndexArray<string> arguments;
             Command interpretedCommand;
             CommandSearchResult commandSearch;
 
-            int argStartPointer = message.IndexOf(':', prefix.Length);
+            int argStartPointer = message.IndexOf(':', Prefix.Length);
             if (argStartPointer == -1 || argStartPointer == message.Length - 1)
             {
                 argumentSection = string.Empty;
@@ -103,12 +102,12 @@ namespace BotCoreNET.CommandHandling
 
         public virtual bool IsPotentialCommand(string messageContent)
         {
-            return messageContent.StartsWith(prefix) && messageContent.Length > prefix.Length;
+            return messageContent.StartsWith(Prefix) && messageContent.Length > Prefix.Length;
         }
 
         public virtual bool IsPotentialCommand(string messageContent, ulong guildId)
         {
-            return messageContent.StartsWith(prefix) && messageContent.Length > prefix.Length;
+            return messageContent.StartsWith(Prefix) && messageContent.Length > Prefix.Length;
         }
 
         public virtual string RemoveArgumentsFront(int count, string argumentSection)
@@ -145,18 +144,18 @@ namespace BotCoreNET.CommandHandling
 
         public virtual string CommandSyntax(string commandidentifier)
         {
-            return $"{prefix}{commandidentifier}";
+            return $"{Prefix}{commandidentifier}";
         }
 
         public virtual string CommandSyntax(string commandidentifier, Argument[] arguments)
         {
             if (arguments.Length == 0)
             {
-                return $"{prefix}{commandidentifier}";
+                return $"{Prefix}{commandidentifier}";
             }
             else
             {
-                return $"{prefix}{commandidentifier}: {string.Join(", ", arguments, 0, arguments.Length)}";
+                return $"{Prefix}{commandidentifier}: {string.Join(", ", arguments, 0, arguments.Length)}";
             }
         }
     }

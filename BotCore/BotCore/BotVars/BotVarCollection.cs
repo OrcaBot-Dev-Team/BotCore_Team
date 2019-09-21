@@ -9,11 +9,13 @@ using System.Threading.Tasks;
 
 namespace BotCoreNET.BotVars
 {
-    public class GuildBotVarCollection
+    public class BotVarCollection
     {
         #region static
         private static readonly Dictionary<string, BotVar> BotVarDefaults = new Dictionary<string, BotVar>();
         #endregion
+
+        private bool IsGuildBotVarCollection;
 
         public readonly ulong GuildID;
         private readonly Dictionary<string, BotVar> BotVars = new Dictionary<string, BotVar>();
@@ -21,54 +23,30 @@ namespace BotCoreNET.BotVars
         public List<BotVar> BotVarList => new List<BotVar>(BotVars.Values);
 
         private readonly object savelock = new object();
-        private bool isDirty;
+        private bool isDirty = true;
 
         private void SetDirty()
         {
             isDirty = true;
         }
 
-        public GuildBotVarCollection(ulong guildId)
+        internal BotVarCollection()
         {
+            IsGuildBotVarCollection = false;
+        }
+
+        internal BotVarCollection(ulong guildId)
+        {
+            IsGuildBotVarCollection = true;
             GuildID = guildId;
         }
 
         #region eventhandling
 
-        private static readonly Dictionary<string, HashSet<BotVarUpdatedGuild>> onBotVarUpdatedGuild = new Dictionary<string, HashSet<BotVarUpdatedGuild>>();
         private readonly Dictionary<string, HashSet<BotVarUpdatedGuild>> onBotVarUpdated = new Dictionary<string, HashSet<BotVarUpdatedGuild>>();
 
-        public static void SubscribeToBotVarUpdateStaticEvent(BotVarUpdatedGuild updateHandler, params string[] ids)
-        {
-            foreach (string id in ids)
-            {
-                if (onBotVarUpdatedGuild.TryGetValue(id, out HashSet<BotVarUpdatedGuild> subscriberList))
-                {
-                    subscriberList.Add(updateHandler);
-                }
-                else
-                {
-                    onBotVarUpdatedGuild[id] = new HashSet<BotVarUpdatedGuild>(new BotVarUpdatedGuild[] { updateHandler });
-                }
-            }
-        }
 
-        public static void UnsubscribeFromBotVarUpdateStaticEvent(BotVarUpdatedGuild updateHandler, params string[] ids)
-        {
-            foreach (string id in ids)
-            {
-                if (onBotVarUpdatedGuild.TryGetValue(id, out HashSet<BotVarUpdatedGuild> subscriberList))
-                {
-                    subscriberList.Remove(updateHandler);
-                    if (subscriberList.Count == 0)
-                    {
-                        onBotVarUpdatedGuild.Remove(id);
-                    }
-                }
-            }
-        }
-
-        internal void SubscribeToBotVarUpdateEvent(BotVarUpdatedGuild updateHandler, params string[] ids)
+        public void SubscribeToBotVarUpdateEvent(BotVarUpdatedGuild updateHandler, params string[] ids)
         {
             foreach (string id in ids)
             {
@@ -83,7 +61,7 @@ namespace BotCoreNET.BotVars
             }
         }
 
-        internal void UnsubscribeFromBotVarUpdateEvent(BotVarUpdatedGuild updateHandler, params string[] ids)
+        public void UnsubscribeFromBotVarUpdateEvent(BotVarUpdatedGuild updateHandler, params string[] ids)
         {
             foreach (string id in ids)
             {
@@ -107,13 +85,13 @@ namespace BotCoreNET.BotVars
                     updateHandler.Invoke(GuildID, var);
                 }
             }
-            if (onBotVarUpdatedGuild.TryGetValue(var.Identifier, out HashSet<BotVarUpdatedGuild> guildSubscriberList))
-            {
-                foreach (BotVarUpdatedGuild updateHandler in guildSubscriberList)
-                {
-                    updateHandler.Invoke(GuildID, var);
-                }
-            }
+            //if (onBotVarUpdatedGuild.TryGetValue(var.Identifier, out HashSet<BotVarUpdatedGuild> guildSubscriberList))
+            //{
+            //    foreach (BotVarUpdatedGuild updateHandler in guildSubscriberList)
+            //    {
+            //        updateHandler.Invoke(GuildID, var);
+            //    }
+            //}
         }
 
         #endregion
@@ -398,7 +376,7 @@ namespace BotCoreNET.BotVars
 
         public static event UlongDelegate OnGuildBotVarsSaved;
 
-        internal Task SaveBotVars()
+        internal Task CheckSaveBotVars()
         {
             if (isDirty)
             {
@@ -409,9 +387,17 @@ namespace BotCoreNET.BotVars
                     json = ToJSON();
                     isDirty = false;
                 }
-                string filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
-                string directory = Path.GetDirectoryName(filepath);
-                Directory.CreateDirectory(directory);
+                string filepath;
+                if (IsGuildBotVarCollection)
+                {
+                    filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
+                    string directory = Path.GetDirectoryName(filepath);
+                    Directory.CreateDirectory(directory);
+                }
+                else
+                {
+                    filepath = Resources.BotVariablesFilePath;
+                }
                 return Resources.SaveJSONFile(filepath, json);
             }
             else
@@ -438,7 +424,18 @@ namespace BotCoreNET.BotVars
 
         internal async Task<bool> TryLoadBotVars()
         {
-            string filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
+            string filepath;
+            if (IsGuildBotVarCollection)
+            {
+                filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
+                string directory = Path.GetDirectoryName(filepath);
+                Directory.CreateDirectory(directory);
+            }
+            else
+            {
+                filepath = Resources.BotVariablesFilePath;
+            }
+
             if (File.Exists(filepath))
             {
                 JSONContainer json = await Resources.LoadJSONFile(filepath);

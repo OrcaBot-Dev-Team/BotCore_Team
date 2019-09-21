@@ -17,10 +17,10 @@ namespace BotCoreNET
 
         internal static void SetupBotVar()
         {
-            BotVarManager.SubscribeToBotVarUpdateEvent(OnBotVarsUpdated, "exceptionhandler.guildid", "exceptionhandler.roleid", "exceptionhandler.channelid");
+            BotVarManager.GlobalBotVars.SubscribeToBotVarUpdateEvent(OnBotVarsUpdated, "exceptionhandler.guildid", "exceptionhandler.roleid", "exceptionhandler.channelid");
         }
 
-        private static void OnBotVarsUpdated(BotVar var)
+        private static void OnBotVarsUpdated(ulong guildId, BotVar var)
         {
             if (var.IsUnsignedInt64)
             {

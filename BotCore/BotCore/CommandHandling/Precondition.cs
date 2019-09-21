@@ -97,7 +97,7 @@ namespace BotCoreNET.CommandHandling
 
         public override bool PreconditionCheckGuild(IGuildCommandContext context, out string message)
         {
-            GuildBotVarCollection BotVarCollection = BotVarManager.GetGuildBotVarCollection(context.Guild.Id);
+            BotVarCollection BotVarCollection = BotVarManager.GetGuildBotVarCollection(context.Guild.Id);
             if (!BotVarCollection.TryGetBotVar(BotVarId, out ulong roleId))
             {
                 message = $"The guild config variable `{BotVarId}` has to be set to the correct role id!";

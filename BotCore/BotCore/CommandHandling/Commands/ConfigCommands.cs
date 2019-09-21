@@ -51,7 +51,7 @@ namespace BotCoreNET.CommandHandling.Commands
             }
 
             BotVarId = context.Arguments.First;
-            BotVarManager.TryGetBotVar(BotVarId, out BotVar);
+            BotVarManager.GlobalBotVars.TryGetBotVar(BotVarId, out BotVar);
 
             if (context.Arguments.TotalCount == 1)
             {
@@ -171,11 +171,11 @@ namespace BotCoreNET.CommandHandling.Commands
             switch (mode)
             {
                 case CommandMode.save:
-                    await BotVarManager.SaveBotVars();
+                    await BotVarManager.GlobalBotVars.CheckSaveBotVars();
                     await context.Channel.SendEmbedAsync($"Saved all config variables!");
                     break;
                 case CommandMode.listall:
-                    List<EmbedFieldBuilder> embedFields = BotVarManager.GetBotVarList();
+                    List<EmbedFieldBuilder> embedFields = BotVarManager.GlobalBotVars.GetBotVarList();
                     if (embedFields.Count == 0)
                     {
                         await context.Channel.SendEmbedAsync(new EmbedBuilder() { Title = $"Config Variables - 0", Color = BotCore.EmbedColor, Description = "None" });
@@ -201,11 +201,11 @@ namespace BotCoreNET.CommandHandling.Commands
                         Title = $"Set Config Variable \"{BotVarId}\" to:",
                         Description = BotVar.ToString()
                     };
-                    BotVarManager.SetBotVar(BotVar);
+                    BotVarManager.GlobalBotVars.SetBotVar(BotVar);
                     await context.Channel.SendEmbedAsync(setembed);
                     break;
                 case CommandMode.delete:
-                    BotVarManager.DeleteBotVar(BotVarId);
+                    BotVarManager.GlobalBotVars.DeleteBotVar(BotVarId);
                     await context.Channel.SendEmbedAsync($"Deleted Config Variable `{BotVarId}`");
                     break;
             }
@@ -247,7 +247,7 @@ namespace BotCoreNET.CommandHandling.Commands
         private BotVarType assignType;
         private string BotVarId;
         private string value;
-        private GuildBotVarCollection BotVarCollection;
+        private BotVarCollection BotVarCollection;
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {

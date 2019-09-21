@@ -62,10 +62,12 @@ namespace BotCoreNET
         private static async Task runAsync()
         {
             await LoadOrGenerateBotVars();
+            string token = await retrieveToken();
+            await checkBotAdmins();
 
             registerBasicCommands();
 
-            await Client.LoginAsync(TokenType.Bot, await retrieveToken());
+            await Client.LoginAsync(TokenType.Bot, token);
             await Client.StartAsync();
             await Task.Delay(-1);
         }
@@ -90,7 +92,7 @@ namespace BotCoreNET
 
         private static async Task LoadOrGenerateBotVars()
         {
-            bool loadsuccess = await BotVarManager.TryLoadBotVars();
+            bool loadsuccess = await BotVarManager.GlobalBotVars.TryLoadBotVars();
             await Resources.LoadGuildFiles();
 
             if (!loadsuccess)
@@ -99,21 +101,47 @@ namespace BotCoreNET
                 if (Console.ReadLine().ToLower().StartsWith('y'))
                 {
                     Directory.CreateDirectory(Resources.BaseDirectory);
-                    await BotVarManager.SaveBotVars();
+                    await BotVarManager.GlobalBotVars.CheckSaveBotVars();
                 }
             }
         }
 
         private static async Task<string> retrieveToken()
         {
-            if (!BotVarManager.TryGetBotVar("discordtoken", out string discordToken))
+            if (!BotVarManager.GlobalBotVars.TryGetBotVar("discordtoken", out string discordToken))
             {
                 Console.WriteLine("BotCore could not find the bot token config variable. Enter the bot token now:");
                 discordToken = Console.ReadLine();
-                BotVarManager.SetBotVar("discordtoken", discordToken);
-                await BotVarManager.SaveBotVars();
+                BotVarManager.GlobalBotVars.SetBotVar("discordtoken", discordToken);
+                await BotVarManager.GlobalBotVars.CheckSaveBotVars();
             }
             return discordToken;
+        }
+
+        private static async Task checkBotAdmins()
+        {
+            if (!BotVarManager.GlobalBotVars.TryGetBotVar("botadmins", out botAdmins))
+            {
+                botAdmins = new ULongHashsetBotVar();
+                Console.Write("BotCore could not find any bot admins. ");
+                bool addedBotAdmin = false;
+                while (!addedBotAdmin)
+                {
+                    Console.WriteLine("Enter a ulong Discord user Id:");
+                    string botAdminId_str = Console.ReadLine();
+                    if (ulong.TryParse(botAdminId_str, out ulong botAdminId))
+                    {
+                        botAdmins.Add(botAdminId);
+                        BotVarManager.GlobalBotVars.SetBotVar("botadmins", botAdmins);
+                        await BotVarManager.GlobalBotVars.CheckSaveBotVars();
+                        addedBotAdmin = true;
+                    }
+                    else
+                    {
+                        Console.Write("Failed to parse entered value to a ulong user Id! ");
+                    }
+                }
+            }
         }
 
         #endregion
@@ -152,8 +180,8 @@ namespace BotCoreNET
         private static void SetupBotVarDefaults()
         {
             BotVar defaultColor = new BotVar("embedcolor", new ColorBotVar(new Color(255, 255, 255)));
-            BotVarManager.SetDefault(defaultColor);
-            BotVarManager.SubscribeToBotVarUpdateEvent(OnBotVarUpdated, "botadmins", "embedcolor");
+            BotVarCollection.SetDefault(defaultColor);
+            BotVarManager.GlobalBotVars.SubscribeToBotVarUpdateEvent(OnBotVarUpdated, "botadmins", "embedcolor");
 
             MessageHandler.SetupBotVarSubscription();
             ExceptionHandler.SetupBotVar();
@@ -161,7 +189,7 @@ namespace BotCoreNET
             OnBotVarDefaultSetup();
         }
 
-        private static void OnBotVarUpdated(BotVar var)
+        private static void OnBotVarUpdated(ulong guildId, BotVar var)
         {
             switch (var.Identifier)
             {

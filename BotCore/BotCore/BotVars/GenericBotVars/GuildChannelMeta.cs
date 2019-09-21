@@ -16,7 +16,7 @@ namespace BotCoreNET.BotVars.GenericBotVars
         {
             if (!guildDefaults.TryGetValue(guildId, out GuildChannelMeta guildDefault))
             {
-                GuildBotVarCollection guildBotVarCollection = BotVarManager.GetGuildBotVarCollection(guildId);
+                BotVarCollection guildBotVarCollection = BotVarManager.GetGuildBotVarCollection(guildId);
                 if (!guildBotVarCollection.TryGetBotVar("defaultguildchannelmeta", out guildDefault))
                 {
                     guildDefault = new GuildChannelMeta();
@@ -37,7 +37,7 @@ namespace BotCoreNET.BotVars.GenericBotVars
         
         public static GuildChannelMeta GetDefaultOrSaved(ulong guildId, ulong channelId)
         {
-            GuildBotVarCollection guildBotVarCollection = BotVarManager.GetGuildBotVarCollection(guildId);
+            BotVarCollection guildBotVarCollection = BotVarManager.GetGuildBotVarCollection(guildId);
             if (!guildBotVarCollection.TryGetBotVar($"{channelId}.meta", out GuildChannelMeta channelMeta))
             {
                 channelMeta = GetDefault(guildId);

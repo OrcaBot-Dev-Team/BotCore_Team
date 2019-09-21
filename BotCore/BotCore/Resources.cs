@@ -93,7 +93,7 @@ namespace BotCoreNET
                 string[] directoryNames = directory.Split('\\', '/');
                 if (directoryNames.Length >= 1 && ulong.TryParse(directoryNames[directoryNames.Length - 1], out ulong guildId))
                 {
-                    GuildBotVarCollection guildCollection = BotVarManager.GetGuildBotVarCollection(guildId);
+                    BotVarCollection guildCollection = BotVarManager.GetGuildBotVarCollection(guildId);
                     if (!await guildCollection.TryLoadBotVars())
                     {
                         await BotCore.Log(new LogMessage(LogSeverity.Warning, "RESOURCES", $"Could not load BotVars for guild id {guildId}"));
