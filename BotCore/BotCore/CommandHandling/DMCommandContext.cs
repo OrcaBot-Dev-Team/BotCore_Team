@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BotCoreNET.CommandHandling
+﻿namespace BotCoreNET.CommandHandling
 {
     public class DMCommandContext : MessageContext, IDMCommandContext
     {

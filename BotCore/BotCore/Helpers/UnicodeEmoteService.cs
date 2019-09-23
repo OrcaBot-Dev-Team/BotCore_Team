@@ -1,9 +1,6 @@
 ﻿using Discord;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace BotCoreNET
+namespace BotCoreNET.Helpers
 {
     public static class UnicodeEmoteService
     {
@@ -105,12 +102,12 @@ namespace BotCoreNET
     {
         public string Name { get; private set; }
 
-        public Emote (string emote)
+        public Emote(string emote)
         {
             Name = emote;
         }
 
-        public Emote (Emotes emote)
+        public Emote(Emotes emote)
         {
             Name = UnicodeEmoteService.GetEmote(emote);
         }

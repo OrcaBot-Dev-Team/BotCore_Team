@@ -1,8 +1,4 @@
 ﻿using BotCoreNET.BotVars;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace BotCoreNET.CommandHandling
 {
@@ -147,7 +143,7 @@ namespace BotCoreNET.CommandHandling
             return $"{Prefix}{commandidentifier}";
         }
 
-        public virtual string CommandSyntax(string commandidentifier, Argument[] arguments)
+        public virtual string CommandSyntax(string commandidentifier, params Argument[] arguments)
         {
             if (arguments.Length == 0)
             {
@@ -155,7 +151,19 @@ namespace BotCoreNET.CommandHandling
             }
             else
             {
-                return $"{Prefix}{commandidentifier}: {string.Join(", ", arguments, 0, arguments.Length)}";
+                return $"{Prefix}{commandidentifier}: {string.Join(", ", arguments as object[])}";
+            }
+        }
+
+        public virtual string CommandSyntax(string commandidentifier, params string[] arguments)
+        {
+            if (arguments.Length == 0)
+            {
+                return $"{Prefix}{commandidentifier}";
+            }
+            else
+            {
+                return $"{Prefix}{commandidentifier}: {string.Join(", ", arguments as object[])}";
             }
         }
     }

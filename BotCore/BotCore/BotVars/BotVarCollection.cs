@@ -1,5 +1,6 @@
 ﻿using BotCoreNET.Helpers;
 using Discord;
+using Discord.WebSocket;
 using JSON;
 using System;
 using System.Collections.Generic;
@@ -9,18 +10,28 @@ using System.Threading.Tasks;
 
 namespace BotCoreNET.BotVars
 {
+    /// <summary>
+    /// Handles storing and managing values and default values used in configuration and storage. Use the <see cref="BotVarManager"/> static class to retrieve BotVarCollection instances
+    /// </summary>
     public class BotVarCollection
     {
-        #region static
         private static readonly Dictionary<string, BotVar> BotVarDefaults = new Dictionary<string, BotVar>();
-        #endregion
 
-        private bool IsGuildBotVarCollection;
-
-        public readonly ulong GuildID;
         private readonly Dictionary<string, BotVar> BotVars = new Dictionary<string, BotVar>();
 
-        public List<BotVar> BotVarList => new List<BotVar>(BotVars.Values);
+        /// <summary>
+        /// If false, is the global BotVarCollection
+        /// </summary>
+        public readonly bool IsGuildBotVarCollection;
+        /// <summary>
+        /// Guild Id this BotVarCollection is assigned to
+        /// </summary>
+        public readonly ulong GuildID;
+
+        /// <summary>
+        /// All saved BotVars
+        /// </summary>
+        public ICollection<BotVar> BotVarList => BotVars.Values;
 
         private readonly object savelock = new object();
         private bool isDirty = true;
@@ -97,6 +108,12 @@ namespace BotCoreNET.BotVars
         #endregion
         #region retrieve config variables
 
+        /// <summary>
+        /// Retrieves a config variable struct
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Result</param>
+        /// <returns>True, if either a variable or a default value was found</returns>
         public bool TryGetBotVar(string id, out BotVar var)
         {
             if (BotVars.TryGetValue(id, out var))
@@ -233,8 +250,17 @@ namespace BotCoreNET.BotVars
         #endregion
         #region set config variables
 
+        /// <summary>
+        /// Sets or creates a config variable
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="value">Value to assign</param>
         public void SetBotVar(BotVar var)
         {
+            if (var.TypeNullTested == BotVarType.Undefined || var.TypeNullTested == BotVarType.Deleted)
+            {
+                throw new ArgumentNullException(nameof(var));
+            }
             lock (savelock)
             {
                 BotVars[var.Identifier] = var;
@@ -355,6 +381,11 @@ namespace BotCoreNET.BotVars
             handleBotVarUpdated(var);
         }
 
+        /// <summary>
+        /// Removes a bot variable
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <returns>True, if a matching botvar was found</returns>
         public bool DeleteBotVar(string id)
         {
             bool removesuccess;
@@ -362,10 +393,12 @@ namespace BotCoreNET.BotVars
             {
                 removesuccess = BotVars.Remove(id);
             }
-            BotVarDefaults.TryGetValue(id, out BotVar def);
-            if (def.Identifier == null)
+            if (!BotVarDefaults.TryGetValue(id, out BotVar def))
             {
-                def.Identifier = id;
+                def = new BotVar
+                {
+                    Type = BotVarType.Deleted
+                };
             }
             handleBotVarUpdated(def);
             return removesuccess;
@@ -374,36 +407,41 @@ namespace BotCoreNET.BotVars
         #endregion
         #region save
 
-        public static event UlongDelegate OnGuildBotVarsSaved;
-
         internal Task CheckSaveBotVars()
         {
             if (isDirty)
             {
                 JSONContainer json;
-                OnGuildBotVarsSaved?.Invoke(GuildID);
                 lock (savelock)
                 {
                     json = ToJSON();
                     isDirty = false;
                 }
                 string filepath;
-                if (IsGuildBotVarCollection)
-                {
-                    filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
-                    string directory = Path.GetDirectoryName(filepath);
-                    Directory.CreateDirectory(directory);
-                }
-                else
-                {
-                    filepath = Resources.BotVariablesFilePath;
-                }
+                filepath = getFilePath();
                 return Resources.SaveJSONFile(filepath, json);
             }
             else
             {
                 return Task.CompletedTask;
             }
+        }
+
+        private string getFilePath()
+        {
+            string filepath;
+            if (IsGuildBotVarCollection)
+            {
+                filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
+                string directory = Path.GetDirectoryName(filepath);
+                Directory.CreateDirectory(directory);
+            }
+            else
+            {
+                filepath = Resources.BotVariablesFilePath;
+            }
+
+            return filepath;
         }
 
         private JSONContainer ToJSON()
@@ -479,43 +517,83 @@ namespace BotCoreNET.BotVars
         }
 
         #endregion
-        #region loading defaults
+        #region setting defaults
 
+        /// <summary>
+        /// Sets a default bot variable of type unsigned integer 64
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, ulong var)
         {
             BotVarDefaults[id] = new BotVar(id, var);
         }
 
+        /// <summary>
+        /// Sets a default bot variable of type signed integer 64
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, long var)
         {
             BotVarDefaults[id] = new BotVar(id, var);
         }
 
+        /// <summary>
+        /// Sets a default bot variable of type float 64
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, double var)
         {
             BotVarDefaults[id] = new BotVar(id, var);
         }
 
+        /// <summary>
+        /// Sets a default bot variable of type string
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, string var)
         {
             BotVarDefaults[id] = new BotVar(id, var);
         }
 
+        /// <summary>
+        /// Sets a default bot variable of type boolean
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, bool var)
         {
             BotVarDefaults[id] = new BotVar(id, var);
         }
 
+        /// <summary>
+        /// Sets a default bot variable of type IGenericBotVar
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, IGenericBotVar var)
         {
             BotVarDefaults[id] = new BotVar(id, var.ToJSON());
         }
 
+        /// <summary>
+        /// Sets a default bot variable of type generic as JSONContainer
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(string id, JSONContainer var)
         {
             BotVarDefaults[id] = new BotVar(id, var);
         }
 
+        /// <summary>
+        /// Sets a default bot variable
+        /// </summary>
+        /// <param name="id">Identifier</param>
+        /// <param name="var">Value</param>
         public static void SetDefault(BotVar var)
         {
             BotVarDefaults[var.Identifier] = var;
@@ -533,8 +611,28 @@ namespace BotCoreNET.BotVars
             return result;
         }
 
+        public override string ToString()
+        {
+            string str;
+            if (IsGuildBotVarCollection)
+            {
+                SocketGuild guild = BotCore.Client.GetGuild(GuildID);
+                if (guild == null)
+                {
+                    str = $"Bot Variables for guild `{GuildID}`";
+                }
+                else
+                {
+                    str = $"Bot Variables for guild **`{guild}`** (`{GuildID}`)";
+                }
+            }
+            else
+            {
+                str = "Global Bot Variables";
+            }
+            return str;
+        }
     }
 
     public delegate void BotVarUpdatedGuild(ulong guildID, BotVar var);
-    public delegate void UlongDelegate(ulong id);
 }

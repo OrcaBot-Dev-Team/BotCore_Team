@@ -3,7 +3,6 @@ using Discord;
 using JSON;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace BotCoreNET.Helpers
 {

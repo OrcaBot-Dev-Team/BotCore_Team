@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BotCoreNET.CommandHandling
+﻿namespace BotCoreNET.CommandHandling
 {
     public interface ICommandParser
     {
@@ -38,7 +34,13 @@ namespace BotCoreNET.CommandHandling
         /// </summary>
         /// <param name="commandidentifier">Command identifier / key</param>
         /// <param name="arguments">Arguments</param>
-        string CommandSyntax(string commandidentifier, Argument[] arguments);
+        string CommandSyntax(string commandidentifier, params Argument[] arguments);
+        /// <summary>
+        /// Provides a full syntax string based on the command identifier and the expected arguments
+        /// </summary>
+        /// <param name="commandidentifier">Command identifier / key</param>
+        /// <param name="arguments">Arguments</param>
+        string CommandSyntax(string commandidentifier, params  string[] arguments);
         /// <summary>
         /// Provides a substring of the argumentSection after the specified arguments infront.
         /// </summary>

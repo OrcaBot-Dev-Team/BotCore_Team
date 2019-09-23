@@ -1,13 +1,13 @@
-﻿using Discord;
+﻿using BotCoreNET.Helpers;
+using Discord;
 using Discord.WebSocket;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BotCoreNET.Helpers
+namespace BotCoreNET
 {
     public static class Macros
     {

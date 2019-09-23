@@ -1,8 +1,4 @@
-﻿using BotCoreNET.Helpers;
-using Discord;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Discord;
 using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling.Commands

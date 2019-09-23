@@ -1,9 +1,7 @@
 ﻿using BotCoreNET.Helpers;
 using Discord;
 using Discord.WebSocket;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling
@@ -41,9 +39,9 @@ namespace BotCoreNET.CommandHandling
 
             foreach (Command command in collection.Commands)
             {
-                if (command.CanView(context, guildContext, context.UserInfo.IsBotAdmin, out _))
+                if (tryGetCommandEmbedField(context, guildContext, command, out EmbedFieldBuilder commandField))
                 {
-                    helpFields.Add(Macros.EmbedField(command.Syntax, command.Summary, true));
+                    helpFields.Add(commandField);
                 }
             }
 
@@ -57,6 +55,9 @@ namespace BotCoreNET.CommandHandling
                 return new EmbedBuilder() { Title = embedTitle, Description = embedDesc, Color = BotCore.EmbedColor, Footer = new EmbedFooterBuilder() { Text = "Context: " + contextType }, Fields = helpFields };
             }
         }
+
+        #endregion
+        #region Help List
 
         public static Task SendHelpList(IDMCommandContext context, ISocketMessageChannel outputchannel = null)
         {
@@ -83,34 +84,7 @@ namespace BotCoreNET.CommandHandling
             string embedTitle = "List of all Commands";
             string embedDesc = "This list only shows commands where all preconditions have been met!";
 
-            List<EmbedFieldBuilder> helpFields = new List<EmbedFieldBuilder>();
-
-            foreach (CommandCollection collection in CommandCollection.AllCollections)
-            {
-                bool collectionAllowed = true;
-                if (context.IsGuildContext)
-                {
-                    collectionAllowed = guildContext.ChannelMeta.allowedCommandCollections.Count == 0 || guildContext.ChannelMeta.allowedCommandCollections.Contains(collection.Name);
-                }
-                int availableCommands = collection.ViewableCommands(context, guildContext);
-                if (availableCommands > 0 && collectionAllowed)
-                {
-                    helpFields.Add(Macros.EmbedField($"Collection \"{collection.Name}\"", $"{availableCommands} commands.{(string.IsNullOrEmpty(collection.Description) ? string.Empty : $" {collection.Description}.")} Use `{MessageHandler.CommandParser.CommandSyntax("man")}` to see a summary of commands in this command family!", true));
-                }
-            }
-
-            foreach (Command command in CommandCollection.BaseCollection.Commands)
-            {
-                bool commandAllowed = true;
-                if (context.IsGuildContext)
-                {
-                    commandAllowed = guildContext.ChannelMeta.CheckChannelMeta(guildContext.UserInfo, command, out _);
-                }
-                if (command.CanView(context, guildContext, context.UserInfo.IsBotAdmin, out _) && commandAllowed)
-                {
-                    helpFields.Add(Macros.EmbedField(command.Syntax, command.Summary, true));
-                }
-            }
+            List<EmbedFieldBuilder> helpFields = getCommandAndCollectionEmbedFields(context, guildContext);
 
             if (helpFields.Count == 0)
             {
@@ -123,7 +97,52 @@ namespace BotCoreNET.CommandHandling
             }
         }
 
+        private static List<EmbedFieldBuilder> getCommandAndCollectionEmbedFields(IDMCommandContext context, IGuildCommandContext guildContext)
+        {
+            List<EmbedFieldBuilder> helpFields = new List<EmbedFieldBuilder>();
+
+            foreach (CommandCollection collection in CommandCollection.AllCollections)
+            {
+                if (tryGetCommandCollectionEmbedField(context, guildContext, collection, out EmbedFieldBuilder collectionField))
+                {
+                    helpFields.Add(collectionField);
+                }
+            }
+
+            foreach (Command command in CommandCollection.BaseCollection.Commands)
+            {
+                if (tryGetCommandEmbedField(context, guildContext, command, out EmbedFieldBuilder commandField))
+                {
+                    helpFields.Add(commandField);
+                }
+            }
+
+            return helpFields;
+        }
+
+        private static bool tryGetCommandCollectionEmbedField(IDMCommandContext context, IGuildCommandContext guildContext, CommandCollection collection, out EmbedFieldBuilder embedField)
+        {
+            bool collectionAllowed = true;
+            if (context.IsGuildContext)
+            {
+                collectionAllowed = guildContext.ChannelMeta.allowedCommandCollections.Count == 0 || guildContext.ChannelMeta.allowedCommandCollections.Contains(collection.Name);
+            }
+            int availableCommands = collection.ViewableCommands(context, guildContext);
+            if (availableCommands > 0 && collectionAllowed)
+            {
+                embedField = Macros.EmbedField($"Collection \"{collection.Name}\"", $"{availableCommands} commands.{(string.IsNullOrEmpty(collection.Description) ? string.Empty : $" {collection.Description}.")} Use `{MessageHandler.CommandParser.CommandSyntax("man", collection.Name)}` to see a summary of commands in this command family!", true);
+                return true;
+            }
+            else
+            {
+                embedField = null;
+                return false;
+            }
+        }
+
+
         #endregion
+        #region Command Specific Help
 
         private static readonly EmbedFieldBuilder syntaxHelpField = new EmbedFieldBuilder() { Name = "Syntax Help", Value = "`key` = command identifier\n`<key>` = required argument\n`(key)` = optional argument\n`[key]` = multiple arguments possible" };
 
@@ -168,23 +187,23 @@ namespace BotCoreNET.CommandHandling
 
                     embed.AddField("Syntax", Markdown.MultiLineCodeBlock(command.FullSyntax) + "\n" + string.Join("\n\n", argumentInfo));
                     embed.AddField(syntaxHelpField);
-
-                    string contextType;
-                    if (command.RequireGuildContext)
-                    {
-                        contextType = "Guild";
-                    }
-                    else
-                    {
-                        contextType = "PM";
-                    }
-                    embed.AddField("Access Requirements", $"\nRequired Execution Location `{contextType}`\n\n**Execution Preconditions**\n{command.ExecutePreconditions.Join("\n")}\n\n**ViewPreconditions**\n{command.ViewPreconditions.Join("\n")}");
-                    embed.Footer = new EmbedFooterBuilder() { Text = "Context: " + contextType };
                 }
                 else
                 {
                     embed.AddField("Syntax", Markdown.MultiLineCodeBlock(command.FullSyntax));
                 }
+
+                string contextType;
+                if (command.RequireGuildContext)
+                {
+                    contextType = "Guild";
+                }
+                else
+                {
+                    contextType = "Guild or PM";
+                }
+                embed.AddField("Access Requirements", $"\nRequired Execution Location `{contextType}`\n\n**Execution Preconditions**\n{command.ExecutePreconditions.Join("\n")}\n\n**ViewPreconditions**\n{command.ViewPreconditions.Join("\n")}");
+                embed.Footer = new EmbedFooterBuilder() { Text = "Required Context: " + contextType };
 
                 return embed;
             }
@@ -192,11 +211,36 @@ namespace BotCoreNET.CommandHandling
             {
                 return new EmbedBuilder()
                 {
-                    Title = $"Help For `{command.FullSyntax}`",
+                    Title = $"Help For `{command.Syntax}`",
                     Description = $"**Failed view precondition check!**\n{failedPreconditionChecks.Join("\n")}",
                     Color = BotCore.ErrorColor
                 };
             }
         }
+
+        #endregion
+        #region Shared Methods
+
+        private static bool tryGetCommandEmbedField(IDMCommandContext context, IGuildCommandContext guildContext, Command command, out EmbedFieldBuilder embedField)
+        {
+            bool commandAllowed = true;
+            if (context.IsGuildContext)
+            {
+                commandAllowed = guildContext.ChannelMeta.CheckChannelMeta(guildContext.UserInfo, command, out _);
+            }
+            if (command.CanView(context, guildContext, context.UserInfo.IsBotAdmin, out _) && commandAllowed)
+            {
+                embedField = Macros.EmbedField(command.Syntax, command.Summary, true);
+                return true;
+            }
+            else
+            {
+                embedField = null;
+                return false;
+            }
+        }
+
+
+        #endregion
     }
 }

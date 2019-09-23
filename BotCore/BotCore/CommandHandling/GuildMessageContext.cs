@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using BotCoreNET.BotVars.GenericBotVars;
+﻿using BotCoreNET.BotVars.GenericBotVars;
 using Discord.WebSocket;
 
 namespace BotCoreNET.CommandHandling

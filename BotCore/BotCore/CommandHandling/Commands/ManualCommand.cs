@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.Threading.Tasks;
-using BotCoreNET.Helpers;
+﻿using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling.Commands
 {
@@ -15,7 +10,7 @@ namespace BotCoreNET.CommandHandling.Commands
 
         public override string Summary => "Provides help and tips for command usage";
 
-        public override Argument[] Arguments => new Argument[] 
+        public override Argument[] Arguments => new Argument[]
         {
             new Argument("Command Identifier", "Command Identifier for the command you want to access the help for", optional:true, multiple:false)
         };
@@ -31,10 +26,12 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
+            command = null;
+            collection = null;
+            identifier = null;
+
             if (context.Arguments.TotalCount == 0)
             {
-                identifier = null;
-                command = null;
                 return Task.FromResult(ArgumentParseResult.DefaultNoArguments);
             }
 

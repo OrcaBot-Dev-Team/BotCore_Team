@@ -76,8 +76,7 @@ namespace BotCoreNET
 
         private static void registerBasicCommands()
         {
-            new BotVarCommand();
-            new GuildBotVarCommand();
+            new BotVarCommand("botvar");
             new ManualCommand("help");
             new ManualCommand("man");
             new AboutCommand();

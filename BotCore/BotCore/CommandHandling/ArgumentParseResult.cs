@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BotCoreNET.CommandHandling
+﻿namespace BotCoreNET.CommandHandling
 {
     /// <summary>
     /// Provides parsing results for argument parsers. Only the static readonly objects represent a successful parse, all other represent a parse error!

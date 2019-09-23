@@ -1,10 +1,6 @@
 ﻿using BotCoreNET.BotVars;
 using BotCoreNET.Helpers;
-using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace BotCoreNET.CommandHandling
 {

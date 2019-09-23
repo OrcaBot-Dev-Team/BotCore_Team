@@ -234,12 +234,13 @@ namespace BotCoreNET.BotVars
 
     public enum BotVarType
     {
-        Undefined,
-        UInt64,
-        Int64,
-        Float64,
-        String,
-        Bool,
-        Generic
+        Undefined = 0,
+        UInt64 = 1,
+        Int64 = 2,
+        Float64 = 3,
+        String = 4,
+        Bool = 5,
+        Generic = 6,
+        Deleted = 7
     }
 }

@@ -1,8 +1,5 @@
 ﻿using BotCoreNET.BotVars.GenericBotVars;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BotCoreNET.CommandHandling
 {

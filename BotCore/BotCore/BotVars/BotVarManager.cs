@@ -10,10 +10,14 @@ using static BotCoreNET.BotCore;
 
 namespace BotCoreNET.BotVars
 {
+    /// <summary>
+    /// Manages <see cref="BotVarCollection"/> instances
+    /// </summary>
     public static class BotVarManager
     {
-        #region Rewrite
-
+        /// <summary>
+        /// <see cref="BotVarCollection"/> instance used for globally saved bot variables
+        /// </summary>
         public static readonly BotVarCollection GlobalBotVars = new BotVarCollection();
         private static readonly Dictionary<ulong, BotVarCollection> GuildBotVars = new Dictionary<ulong, BotVarCollection>();
 
@@ -36,14 +40,23 @@ namespace BotCoreNET.BotVars
             while (true)
             {
                 await Task.Delay(sleepDelay);
-                await GlobalBotVars.CheckSaveBotVars();
-                foreach (BotVarCollection botVarCollection in GuildBotVars.Values)
-                {
-                    await botVarCollection.CheckSaveBotVars();
-                }
+                await SaveAllBotVars();
             }
         }
 
+        internal static async Task SaveAllBotVars()
+        {
+            await GlobalBotVars.CheckSaveBotVars();
+            foreach (BotVarCollection botVarCollection in GuildBotVars.Values)
+            {
+                await botVarCollection.CheckSaveBotVars();
+            }
+        }
+
+        /// <summary>
+        /// Retrieve or generate a guild <see cref="BotVarCollection"/>
+        /// </summary>
+        /// <param name="guildId">Discord Guild Id</param>
         public static BotVarCollection GetGuildBotVarCollection(ulong guildId)
         {
             if (!GuildBotVars.TryGetValue(guildId, out BotVarCollection result))
@@ -53,9 +66,6 @@ namespace BotCoreNET.BotVars
             }
             return result;
         }
-
-
-        #endregion
 
     }
 
