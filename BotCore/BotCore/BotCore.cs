@@ -81,10 +81,10 @@ namespace BotCoreNET
             new ManualCommand("man");
             new AboutCommand();
             CommandCollection embedCollection = new CommandCollection("Embed", "Commands for parsing, sending and editing embeds");
-            new SendEmbedCommand("embed-send", embedCollection);
-            new PreviewEmbedCommand("embed-preview", embedCollection);
-            new GetEmbedCommand("embed-get", embedCollection);
-            new ReplaceEmbedCommand("embed-replace", embedCollection);
+            new EmbedSendCommand("embed-send", embedCollection);
+            new EmbedPreviewCommand("embed-preview", embedCollection);
+            new EmbedGetCommand("embed-get", embedCollection);
+            new EmbedReplaceCommand("embed-replace", embedCollection);
 
             ActionScheduler.AddSchedulerEntry(TimeSpan.FromSeconds(20), SetActivitySchedulerAction);
         }

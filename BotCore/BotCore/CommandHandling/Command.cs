@@ -113,31 +113,29 @@ namespace BotCoreNET.CommandHandling
                 {
                     stage = "Parsing Arguments";
                     ArgumentParseResult parseResult = await parseArguments(context, guildContext);
-                    if (!parseResult.Success)
-                    {
-                        EmbedBuilder parseFailed = new EmbedBuilder()
-                        {
-                            Color = BotCore.ErrorColor,
-                            Title = "Argument Parsing Failed!",
-                            Description = parseResult.ToString()
-                        };
-                        await context.Channel.SendEmbedAsync(parseFailed);
-                    }
-                    else
+                    if (parseResult.Success)
                     {
                         stage = "Executing Command";
                         await execute(context, guildContext);
                     }
+                    else
+                    {
+                        await context.Channel.SendEmbedAsync(new EmbedBuilder()
+                        {
+                            Color = BotCore.ErrorColor,
+                            Title = "Argument Parsing Failed!",
+                            Description = parseResult.ToString()
+                        });
+                    }
                 }
                 else
                 {
-                    EmbedBuilder embed = new EmbedBuilder()
+                    await context.Channel.SendEmbedAsync(new EmbedBuilder()
                     {
                         Title = "Command Execution Failed",
                         Color = BotCore.ErrorColor,
                         Description = errors.Join("\n")
-                    };
-                    await context.Channel.SendEmbedAsync(embed);
+                    });
                 }
             }
             catch (Exception e)
@@ -149,50 +147,59 @@ namespace BotCoreNET.CommandHandling
         private Task execute(IDMCommandContext context, IGuildCommandContext guildContext)
         {
             if (RunInAsyncMode)
-            {
-                switch (ExecutionMethod)
-                {
-                    case HandledContexts.None:
-                        return context.Channel.SendEmbedAsync("INTERNAL ERROR", true);
-                    case HandledContexts.DMOnly:
-                        AsyncCommandContainer.NewAsyncCommand(Execute, context);
-                        break;
-                    case HandledContexts.GuildOnly:
-                        AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext);
-                        break;
-                    case HandledContexts.Both:
-                        if (context.IsGuildContext)
-                        {
-                            AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext);
-                        }
-                        else
-                        {
-                            AsyncCommandContainer.NewAsyncCommand(Execute, context);
-                        }
-                        break;
-                }
-                return Task.CompletedTask;
-            }
+                return executeAsyncMode(context, guildContext);
             else
             {
-                switch (ExecutionMethod)
-                {
-                    case HandledContexts.None:
-                        return context.Channel.SendEmbedAsync("INTERNAL ERROR", true);
-                    case HandledContexts.DMOnly:
-                        return Execute(context);
-                    case HandledContexts.GuildOnly:
+                return executeSyncMode(context, guildContext);
+            }
+        }
+
+        private Task executeSyncMode(IDMCommandContext context, IGuildCommandContext guildContext)
+        {
+            switch (ExecutionMethod)
+            {
+                case HandledContexts.None:
+                    return context.Channel.SendEmbedAsync("INTERNAL ERROR", true);
+                case HandledContexts.DMOnly:
+                    return Execute(context);
+                case HandledContexts.GuildOnly:
+                    return ExecuteGuild(guildContext);
+                case HandledContexts.Both:
+                    if (context.IsGuildContext)
+                    {
                         return ExecuteGuild(guildContext);
-                    case HandledContexts.Both:
-                        if (context.IsGuildContext)
-                        {
-                            return ExecuteGuild(guildContext);
-                        }
-                        else
-                        {
-                            return Execute(context);
-                        }
-                }
+                    }
+                    else
+                    {
+                        return Execute(context);
+                    }
+                default:
+                    return Task.CompletedTask;
+            }
+        }
+
+        private Task executeAsyncMode(IDMCommandContext context, IGuildCommandContext guildContext)
+        {
+            switch (ExecutionMethod)
+            {
+                case HandledContexts.None:
+                    return context.Channel.SendEmbedAsync("INTERNAL ERROR", true);
+                case HandledContexts.DMOnly:
+                    AsyncCommandContainer.NewAsyncCommand(Execute, context);
+                    break;
+                case HandledContexts.GuildOnly:
+                    AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext);
+                    break;
+                case HandledContexts.Both:
+                    if (context.IsGuildContext)
+                    {
+                        AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext);
+                    }
+                    else
+                    {
+                        AsyncCommandContainer.NewAsyncCommand(Execute, context);
+                    }
+                    break;
             }
             return Task.CompletedTask;
         }
@@ -241,25 +248,19 @@ namespace BotCoreNET.CommandHandling
 
             foreach (Precondition precondition in preconditions)
             {
+                bool check;
+                string error;
                 if (precondition.RequireGuild)
                 {
-                    if (!precondition.PreconditionCheckGuild(guildContext, out string error))
-                    {
-                        if (!precondition.OverrideAsBotadmin || !precondition.OverrideAsBotadmin)
-                        {
-                            errors.Add(error);
-                        }
-                    }
+                    check = precondition.PreconditionCheckGuild(guildContext, out error);
                 }
                 else
                 {
-                    if (!precondition.PreconditionCheck(context, out string error))
-                    {
-                        if (!precondition.OverrideAsBotadmin || !precondition.OverrideAsBotadmin)
-                        {
-                            errors.Add(error);
-                        }
-                    }
+                    check = precondition.PreconditionCheck(context, out error);
+                }
+                if (!check && !(precondition.OverrideAsBotadmin && isBotAdmin))
+                {
+                    errors.Add(error);
                 }
             }
 

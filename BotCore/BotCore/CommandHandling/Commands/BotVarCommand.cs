@@ -63,7 +63,7 @@ namespace BotCoreNET.CommandHandling.Commands
 
             if (context.Arguments.TotalCount == 1) // If argcnt is 1 (only context provided), commandmode is to list all botvars
             {
-                mode = CommandMode.listall;
+                mode = CommandMode.list;
                 return Task.FromResult(ArgumentParseResult.SuccessfullParse);
             }
 
@@ -225,58 +225,80 @@ namespace BotCoreNET.CommandHandling.Commands
             return true;
         }
 
-        protected override async Task Execute(IDMCommandContext context)
+        protected override Task Execute(IDMCommandContext context)
         {
             EmbedFooterBuilder footer = new EmbedFooterBuilder() { Text = TargetBotVarCollection.ToString() };
             switch (mode)
             {
                 case CommandMode.save:
-                    await BotVarManager.SaveAllBotVars();
-                    await context.Channel.SendEmbedAsync("Saved all bot variables");
-                    break;
-                case CommandMode.listall:
-                    List<EmbedFieldBuilder> embedFields = TargetBotVarCollection.GetBotVarList();
-                    if (embedFields.Count == 0)
-                    {
-                        await context.Channel.SendEmbedAsync(new EmbedBuilder() { Title = $"{TargetBotVarCollection} - 0", Color = BotCore.EmbedColor, Description = "None" });
-                    }
-                    else
-                    {
-                        await context.Channel.SendSafeEmbedList($"{TargetBotVarCollection} - {embedFields.Count}", embedFields);
-                    }
-                    break;
+                    return execute_saveAllBotVars(context);
+                case CommandMode.list:
+                    return execute_listBotVars(context);
                 case CommandMode.get:
-                    EmbedBuilder embed = new EmbedBuilder()
-                    {
-                        Color = BotCore.EmbedColor,
-                        Title = $"Bot Variable \"{BotVarId}\"",
-                        Description = BotVar.ToString(),
-                        Footer = footer
-                    };
-                    await context.Channel.SendEmbedAsync(embed);
-                    break;
+                    return execute_getBotVar(context, footer);
                 case CommandMode.set:
-                    TargetBotVarCollection.SetBotVar(BotVar);
-                    EmbedBuilder setembed = new EmbedBuilder()
-                    {
-                        Color = BotCore.EmbedColor,
-                        Title = $"Set Bot Variable \"{BotVarId}\" to:",
-                        Description = BotVar.ToString(),
-                        Footer = footer
-                    };
-                    await context.Channel.SendEmbedAsync(setembed);
-                    break;
+                    return execute_setBotVar(context, footer);
                 case CommandMode.delete:
-                    TargetBotVarCollection.DeleteBotVar(BotVarId);
-                    await context.Channel.SendEmbedAsync($"Deleted Bot Variable `{BotVarId}`");
-                    break;
+                    return execute_deleteBotVar(context);
+                default:
+                    return Task.CompletedTask;
+            }
+        }
+
+        private Task execute_deleteBotVar(IDMCommandContext context)
+        {
+            TargetBotVarCollection.DeleteBotVar(BotVarId);
+            return context.Channel.SendEmbedAsync($"Deleted Bot Variable `{BotVarId}`");
+        }
+
+        private Task execute_setBotVar(IDMCommandContext context, EmbedFooterBuilder footer)
+        {
+            TargetBotVarCollection.SetBotVar(BotVar);
+            EmbedBuilder setembed = new EmbedBuilder()
+            {
+                Color = BotCore.EmbedColor,
+                Title = $"Set Bot Variable \"{BotVarId}\" to:",
+                Description = BotVar.ToString(),
+                Footer = footer
+            };
+            return context.Channel.SendEmbedAsync(setembed);
+        }
+
+        private Task execute_getBotVar(IDMCommandContext context, EmbedFooterBuilder footer)
+        {
+            EmbedBuilder embed = new EmbedBuilder()
+            {
+                Color = BotCore.EmbedColor,
+                Title = $"Bot Variable \"{BotVarId}\"",
+                Description = BotVar.ToString(),
+                Footer = footer
+            };
+            return context.Channel.SendEmbedAsync(embed);
+        }
+
+        private static async Task execute_saveAllBotVars(IDMCommandContext context)
+        {
+            await BotVarManager.SaveAllBotVars();
+            await context.Channel.SendEmbedAsync("Saved all bot variables");
+        }
+
+        private Task execute_listBotVars(IDMCommandContext context)
+        {
+            List<EmbedFieldBuilder> embedFields = TargetBotVarCollection.GetBotVarList();
+            if (embedFields.Count == 0)
+            {
+                return context.Channel.SendEmbedAsync(new EmbedBuilder() { Title = $"{TargetBotVarCollection} - 0", Color = BotCore.EmbedColor, Description = "None" });
+            }
+            else
+            {
+                return context.Channel.SendSafeEmbedList($"{TargetBotVarCollection} - {embedFields.Count}", embedFields);
             }
         }
 
         private enum CommandMode
         {
             save,
-            listall,
+            list,
             get,
             set,
             delete

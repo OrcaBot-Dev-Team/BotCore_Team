@@ -462,17 +462,7 @@ namespace BotCoreNET.BotVars
 
         internal async Task<bool> TryLoadBotVars()
         {
-            string filepath;
-            if (IsGuildBotVarCollection)
-            {
-                filepath = Resources.GetGuildBotVarSaveFileName(GuildID);
-                string directory = Path.GetDirectoryName(filepath);
-                Directory.CreateDirectory(directory);
-            }
-            else
-            {
-                filepath = Resources.BotVariablesFilePath;
-            }
+            string filepath = getFilePath();
 
             if (File.Exists(filepath))
             {

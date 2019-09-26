@@ -112,22 +112,29 @@ namespace BotCoreNET.BotVars.GenericBotVars
 
             if (command != null)
             {
-                if (command.IsShitposting && !AllowShitposting)
-                {
-                    error = "This channel does not allow shitposting commands!";
-                    return false;
-                }
-
-                if (allowedCommandCollections.Count > 0)
-                {
-                    if (!allowedCommandCollections.Contains(command.Collection.Name))
-                    {
-                        error = $"This channel does not allow commands from the command collection `{command.Collection.Name}`!";
-                        return false;
-                    }
-                }
+                return checkCommand(command, out error);
             }
 
+            return true;
+        }
+
+        private bool checkCommand(Command command, out string error)
+        {
+            if (command.IsShitposting && !AllowShitposting)
+            {
+                error = "This channel does not allow shitposting commands!";
+                return false;
+            }
+
+            if (allowedCommandCollections.Count > 0)
+            {
+                if (!allowedCommandCollections.Contains(command.Collection.Name))
+                {
+                    error = $"This channel does not allow commands from the command collection `{command.Collection.Name}`!";
+                    return false;
+                }
+            }
+            error = null;
             return true;
         }
     }

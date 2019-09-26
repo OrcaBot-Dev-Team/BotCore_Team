@@ -31,16 +31,7 @@ namespace BotCoreNET
             TimeSpan sleepDelay = TimeSpan.FromSeconds(1);
             while (true)
             {
-                AsyncDelegate action = null;
-                foreach (SchedulerEntry entry in schedulerEntries)
-                {
-                    if (entry.IsDue)
-                    {
-                        action = entry.Action;
-                        toBeRemoved.Add(entry);
-                        break;
-                    }
-                }
+                AsyncDelegate action = getAction();
                 lock (listlock)
                 {
                     schedulerEntries.RemoveRange(toBeRemoved);
@@ -64,6 +55,22 @@ namespace BotCoreNET
                     await Task.Delay(sleepDelay);
                 }
             }
+        }
+
+        private static AsyncDelegate getAction()
+        {
+            AsyncDelegate action = null;
+            foreach (SchedulerEntry entry in schedulerEntries)
+            {
+                if (entry.IsDue)
+                {
+                    action = entry.Action;
+                    toBeRemoved.Add(entry);
+                    break;
+                }
+            }
+
+            return action;
         }
 
         public static void AddSchedulerEntry(DateTimeOffset dueTime, AsyncDelegate callback)
