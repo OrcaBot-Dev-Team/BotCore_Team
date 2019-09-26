@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling.Commands
 {
-    class EmbedPreviewCommand : Command
+    internal class EmbedPreviewCommand : Command
     {
         public override string Summary => "Previews an embed in the channel the command is issued from";
         public override string Remarks => "Good tool for creating JSON formatted embeds: [MagicBots](https://discord.club/embedg/)";

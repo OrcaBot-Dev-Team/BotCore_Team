@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling.Commands
 {
-    class EmbedGetCommand : Command
+    internal class EmbedGetCommand : Command
     {
         public override string Summary => "Formats a JSON from a given message, including embeds";
         public override string Remarks => "Good tool for creating JSON formatted embeds: [MagicBots](https://discord.club/embedg/)";

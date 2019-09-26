@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling.Commands
 {
-    class EmbedReplaceCommand : Command
+    internal class EmbedReplaceCommand : Command
     {
         public override string Summary => "Edits a message to follow a new embedjson";
         public override string Remarks => "The message author has to be by the bot used to modify!";

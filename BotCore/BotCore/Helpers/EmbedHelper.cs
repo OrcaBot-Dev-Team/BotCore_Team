@@ -231,25 +231,36 @@ namespace BotCoreNET.Helpers
             {
                 if (fieldJSON.IsObject)
                 {
-                    if (fieldJSON.Container.TryGetField(NAME, out string name) && fieldJSON.Container.TryGetField(VALUE, out string value))
+                    if (getEmbedField(fieldJSON, out EmbedFieldBuilder field))
                     {
-                        fieldJSON.Container.TryGetField(INLINE, out bool isInline, false);
-                        if (name != null && value != null)
-                        {
-                            if (name.Length > EMBEDFIELDNAME_MAX)
-                            {
-                                throw new EmbedParseException($"A field name may not exceed {EMBEDFIELDNAME_MAX} characters!");
-                            }
-                            if (value.Length > EMBEDFIELDVALUE_MAX)
-                            {
-                                throw new EmbedParseException($"A field value may not exceed {EMBEDFIELDVALUE_MAX} characters!");
-                            }
-                            fields.Add(new EmbedFieldBuilder() { Name = name, Value = value, IsInline = isInline });
-                        }
+                        fields.Add(field);
                     }
                 }
             }
             return fields;
+        }
+
+        private static bool getEmbedField(JSONField fieldJSON, out EmbedFieldBuilder field)
+        {
+            if (fieldJSON.Container.TryGetField(NAME, out string name) && fieldJSON.Container.TryGetField(VALUE, out string value))
+            {
+                fieldJSON.Container.TryGetField(INLINE, out bool isInline, false);
+                if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(value))
+                {
+                    if (name.Length > EMBEDFIELDNAME_MAX)
+                    {
+                        throw new EmbedParseException($"A field name may not exceed {EMBEDFIELDNAME_MAX} characters!");
+                    }
+                    if (value.Length > EMBEDFIELDVALUE_MAX)
+                    {
+                        throw new EmbedParseException($"A field value may not exceed {EMBEDFIELDVALUE_MAX} characters!");
+                    }
+                    field = new EmbedFieldBuilder() { Name = name, Value = value, IsInline = isInline };
+                    return true;
+                }
+            }
+            field = null;
+            return false;
         }
 
         #endregion

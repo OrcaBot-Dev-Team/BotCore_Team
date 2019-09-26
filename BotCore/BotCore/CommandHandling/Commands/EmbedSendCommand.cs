@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace BotCoreNET.CommandHandling.Commands
 {
-    class EmbedSendCommand : Command
+    internal class EmbedSendCommand : Command
     {
         public override string Summary => "Sends a fully featured embed to a guild text channel";
         public override string Remarks => "Good tool for creating JSON formatted embeds: [MagicBots](https://discord.club/embedg/)";
