@@ -95,14 +95,14 @@ namespace BotCoreNET.CommandHandling
             typingState.Dispose();
         }
 
-        internal static void NewAsyncCommand(HandleAsync handle, IDMCommandContext context)
+        internal static void NewAsyncCommand(HandleAsync handle, IDMCommandContext context, object parsedArgs)
         {
-            NewAsyncCommand(() => { return handle(context); }, context);
+            NewAsyncCommand(() => { return handle(context, parsedArgs); }, context);
         }
 
-        internal static void NewAsyncCommand(HandleGuildAsync handle, IGuildCommandContext context)
+        internal static void NewAsyncCommand(HandleGuildAsync handle, IGuildCommandContext context, object parsedArgs)
         {
-            NewAsyncCommand(() => { return handle(context); }, context);
+            NewAsyncCommand(() => { return handle(context, parsedArgs); }, context);
         }
 
         private static void NewAsyncCommand(AsyncDelegate task, IDMCommandContext context)
@@ -114,6 +114,6 @@ namespace BotCoreNET.CommandHandling
     }
 
     internal delegate Task AsyncDelegate();
-    internal delegate Task HandleAsync(IDMCommandContext context);
-    internal delegate Task HandleGuildAsync(IGuildCommandContext context);
+    internal delegate Task HandleAsync(IDMCommandContext context, object parsedArgs);
+    internal delegate Task HandleGuildAsync(IGuildCommandContext context, object parsedArgs);
 }

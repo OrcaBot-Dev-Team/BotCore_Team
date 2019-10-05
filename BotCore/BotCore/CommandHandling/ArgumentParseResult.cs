@@ -14,13 +14,15 @@
         /// </summary>
         public string Message { get; private set; }
 
-        public static readonly ArgumentParseResult DefaultNoArguments = new ArgumentParseResult("No arguments given");
-        public static readonly ArgumentParseResult SuccessfullParse = new ArgumentParseResult("Successful parse!");
+        /// <summary>
+        /// Result
+        /// </summary>
+        public object ParseResult { get; private set; }
 
+        public static readonly ArgumentParseResult DefaultNoArguments = new ArgumentParseResult("No arguments given");
         static ArgumentParseResult()
         {
             DefaultNoArguments.Success = true;
-            SuccessfullParse.Success = true;
         }
 
         /// <summary>
@@ -50,6 +52,14 @@
         {
             Message = $"*`{argument}`*: {errormessage}";
         }
+
+        public ArgumentParseResult(object parseResult)
+        {
+            Success = true;
+            Message = "Successful Parse";
+            ParseResult = parseResult;
+        }
+
 
         public override string ToString()
         {

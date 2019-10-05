@@ -15,9 +15,11 @@ namespace BotCoreNET.CommandHandling.Commands
         public override Precondition[] ExecutePreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
         public override Precondition[] ViewPreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
 
-
-        string messageContent = string.Empty;
-        private EmbedBuilder embed;
+        private class ArgumentContainer
+        {
+            public string messageContent = string.Empty;
+            public EmbedBuilder embed;
+        }
 
         public override HandledContexts ArgumentParserMethod => HandledContexts.DMOnly;
 
@@ -31,15 +33,17 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
+            ArgumentContainer argOut = new ArgumentContainer();
+
             if (context.Message.Content.Length > Identifier.Length + 1)
             {
                 string embedText = context.ArgumentSection.Replace("[3`]", "```");
 
                 if (JSONContainer.TryParse(embedText, out JSONContainer json, out string errormessage))
                 {
-                    if (EmbedHelper.TryGetMessageFromJSONObject(json, out embed, out messageContent, out string error))
+                    if (EmbedHelper.TryGetMessageFromJSONObject(json, out argOut.embed, out argOut.messageContent, out string error))
                     {
-                        return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                        return Task.FromResult(new ArgumentParseResult(argOut));
                     }
                     else
                     {
@@ -53,24 +57,25 @@ namespace BotCoreNET.CommandHandling.Commands
             }
             else
             {
-                embed = null;
                 return Task.FromResult(new ArgumentParseResult("Internal Error: " + Macros.GetCodeLocation()));
             }
         }
 
-        protected override Task Execute(IDMCommandContext context)
+        protected override Task Execute(IDMCommandContext context, object argObject)
         {
-            if (embed == null && messageContent != null)
+            ArgumentContainer args = argObject as ArgumentContainer;
+
+            if (args.embed == null && args.messageContent != null)
             {
-                return context.Channel.SendMessageAsync(messageContent);
+                return context.Channel.SendMessageAsync(args.messageContent);
             }
-            else if (embed != null && messageContent == null)
+            else if (args.embed != null && args.messageContent == null)
             {
-                return context.Channel.SendEmbedAsync(embed);
+                return context.Channel.SendEmbedAsync(args.embed);
             }
-            else if (embed != null && messageContent != null)
+            else if (args.embed != null && args.messageContent != null)
             {
-                return context.Channel.SendMessageAsync(text: messageContent, embed: embed.Build());
+                return context.Channel.SendMessageAsync(text: args.messageContent, embed: args.embed.Build());
             }
             else
             {

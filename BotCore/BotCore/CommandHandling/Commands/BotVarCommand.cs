@@ -31,24 +31,29 @@ namespace BotCoreNET.CommandHandling.Commands
             Register(identifier, collection);
         }
 
-        private CommandMode mode;
-        private BotVar BotVar;
-        private BotVarType assignType;
-        private string BotVarId;
-        private string value;
-        private BotVarCollection TargetBotVarCollection;
+        private class ArgumentContainer
+        {
+            public CommandMode mode;
+            public BotVar BotVar;
+            public BotVarType assignType;
+            public string BotVarId;
+            public string value;
+            public BotVarCollection TargetBotVarCollection;
+        }
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
+            ArgumentContainer argOut = new ArgumentContainer();
+
             // Parse <Context> argument
             if (context.Arguments.First.ToLower() == "save")
             {
-                mode = CommandMode.save;
-                return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                argOut.mode = CommandMode.save;
+                return Task.FromResult(new ArgumentParseResult(argOut));
             }
             else if (context.Arguments.First.ToLower() == "global")
             {
-                TargetBotVarCollection = BotVarManager.GlobalBotVars;
+                argOut.TargetBotVarCollection = BotVarManager.GlobalBotVars;
             }
             else
             {
@@ -56,32 +61,32 @@ namespace BotCoreNET.CommandHandling.Commands
                 {
                     return Task.FromResult(new ArgumentParseResult(Arguments[0]));
                 }
-                TargetBotVarCollection = BotVarManager.GetGuildBotVarCollection(guild.Id);
+                argOut.TargetBotVarCollection = BotVarManager.GetGuildBotVarCollection(guild.Id);
             }
 
             context.Arguments.Index++;
 
             if (context.Arguments.TotalCount == 1) // If argcnt is 1 (only context provided), commandmode is to list all botvars
             {
-                mode = CommandMode.list;
-                return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                argOut.mode = CommandMode.list;
+                return Task.FromResult(new ArgumentParseResult(argOut));
             }
 
             // Parse <BotVar Id> argument
 
-            BotVarId = context.Arguments.First;
-            TargetBotVarCollection.TryGetBotVar(BotVarId, out BotVar);
+            argOut.BotVarId = context.Arguments.First;
+            argOut.TargetBotVarCollection.TryGetBotVar(argOut.BotVarId, out argOut.BotVar);
 
             if (context.Arguments.TotalCount == 2) // If argcnt is 2 (only context and BotVar id provided), commandmode is to display the requested botvar
             {
-                mode = CommandMode.get;
-                if (BotVar.IsDefined)
+                argOut.mode = CommandMode.get;
+                if (argOut.BotVar.IsDefined)
                 {
-                    return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                    return Task.FromResult(new ArgumentParseResult(argOut));
                 }
                 else
                 {
-                    return Task.FromResult(new ArgumentParseResult(Arguments[0], $"Couldn't locate a config variable named `{BotVarId}`!"));
+                    return Task.FromResult(new ArgumentParseResult(Arguments[0], $"Couldn't locate a config variable named `{argOut.BotVarId}`!"));
                 }
             }
 
@@ -89,14 +94,14 @@ namespace BotCoreNET.CommandHandling.Commands
 
             // Parse argument <Type>
 
-            if (!parseArgument_Type(context, out ArgumentParseResult failedTypeArgParse))
+            if (!parseArgument_Type(context, argOut, out ArgumentParseResult failedTypeArgParse))
             {
                 return Task.FromResult(failedTypeArgParse);
             }
 
-            if (mode == CommandMode.delete) // No further parsing required as mode is delete
+            if (argOut.mode == CommandMode.delete) // No further parsing required as mode is delete
             {
-                return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                return Task.FromResult(new ArgumentParseResult(argOut));
             }
 
             if (context.Arguments.TotalCount == 3) // No value argument provided
@@ -107,42 +112,42 @@ namespace BotCoreNET.CommandHandling.Commands
             context.Arguments.Index++;
 
             // Parse value argument
-            if (!parseArgument_Value(context, out ArgumentParseResult failedValueArgParse))
+            if (!parseArgument_Value(context, argOut, out ArgumentParseResult failedValueArgParse))
             {
                 return Task.FromResult(failedValueArgParse);
             }
 
-            return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+            return Task.FromResult(new ArgumentParseResult(argOut));
         }
 
-        private bool parseArgument_Type(IDMCommandContext  context, out ArgumentParseResult failedParse)
+        private bool parseArgument_Type(IDMCommandContext  context, ArgumentContainer argOut, out ArgumentParseResult failedParse)
         {
             if (context.Arguments.First.ToLower() == "delete") // Type is to delete the value
             {
-                mode = CommandMode.delete;
-                if (BotVar.IsDefined)
+                argOut.mode = CommandMode.delete;
+                if (argOut.BotVar.IsDefined)
                 {
                     failedParse = null;
                     return true;
                 }
                 else
                 {
-                    failedParse = new ArgumentParseResult(Arguments[0], $"Couldn't locate a config variable named `{BotVarId}`!");
+                    failedParse = new ArgumentParseResult(Arguments[0], $"Couldn't locate a config variable named `{argOut.BotVarId}`!");
                     return false;
                 }
             }
             else
             {
-                mode = CommandMode.set;
+                argOut.mode = CommandMode.set;
             }
 
-            if (!Enum.TryParse(context.Arguments.First, true, out assignType))
+            if (!Enum.TryParse(context.Arguments.First, true, out argOut.assignType))
             {
                 failedParse = new ArgumentParseResult(Arguments[2]);
                 return false;
             }
 
-            if (assignType == BotVarType.Undefined || assignType == BotVarType.Deleted)
+            if (argOut.assignType == BotVarType.Undefined || argOut.assignType == BotVarType.Deleted)
             {
                 failedParse = new ArgumentParseResult(Arguments[2]);
                 return false;
@@ -152,16 +157,16 @@ namespace BotCoreNET.CommandHandling.Commands
             return true;
         }
 
-        private bool parseArgument_Value(IDMCommandContext context, out ArgumentParseResult failedParse)
+        private bool parseArgument_Value(IDMCommandContext context, ArgumentContainer argOut, out ArgumentParseResult failedParse)
         {
-            value = context.Arguments.First;
+            argOut.value = context.Arguments.First;
 
-            switch (assignType)
+            switch (argOut.assignType)
             {
                 case BotVarType.UInt64:
-                    if (ulong.TryParse(value, out ulong uint64Val))
+                    if (ulong.TryParse(argOut.value, out ulong uint64Val))
                     {
-                        BotVar = new BotVar(BotVarId, uint64Val);
+                        argOut.BotVar = new BotVar(argOut.BotVarId, uint64Val);
                     }
                     else
                     {
@@ -170,9 +175,9 @@ namespace BotCoreNET.CommandHandling.Commands
                     }
                     break;
                 case BotVarType.Int64:
-                    if (long.TryParse(value, out long int64Val))
+                    if (long.TryParse(argOut.value, out long int64Val))
                     {
-                        BotVar = new BotVar(BotVarId, int64Val);
+                        argOut.BotVar = new BotVar(argOut.BotVarId, int64Val);
                     }
                     else
                     {
@@ -181,9 +186,9 @@ namespace BotCoreNET.CommandHandling.Commands
                     }
                     break;
                 case BotVarType.Float64:
-                    if (double.TryParse(value, out double float64Val))
+                    if (double.TryParse(argOut.value, out double float64Val))
                     {
-                        BotVar = new BotVar(BotVarId, float64Val);
+                        argOut.BotVar = new BotVar(argOut.BotVarId, float64Val);
                     }
                     else
                     {
@@ -192,12 +197,12 @@ namespace BotCoreNET.CommandHandling.Commands
                     }
                     break;
                 case BotVarType.String:
-                    BotVar = new BotVar(BotVarId, value);
+                    argOut.BotVar = new BotVar(argOut.BotVarId, argOut.value);
                     break;
                 case BotVarType.Bool:
-                    if (bool.TryParse(value, out bool boolVal))
+                    if (bool.TryParse(argOut.value, out bool boolVal))
                     {
-                        BotVar = new BotVar(BotVarId, boolVal);
+                        argOut.BotVar = new BotVar(argOut.BotVarId, boolVal);
                     }
                     else
                     {
@@ -209,7 +214,7 @@ namespace BotCoreNET.CommandHandling.Commands
                     string json_str = context.RemoveArgumentsFront(3);
                     if (JSONContainer.TryParse(json_str, out JSONContainer json, out string error))
                     {
-                        BotVar = new BotVar(BotVarId, json);
+                        argOut.BotVar = new BotVar(argOut.BotVarId, json);
                     }
                     else
                     {
@@ -225,52 +230,53 @@ namespace BotCoreNET.CommandHandling.Commands
             return true;
         }
 
-        protected override Task Execute(IDMCommandContext context)
+        protected override Task Execute(IDMCommandContext context, object args)
         {
-            EmbedFooterBuilder footer = new EmbedFooterBuilder() { Text = TargetBotVarCollection.ToString() };
-            switch (mode)
+            ArgumentContainer argContainer = args as ArgumentContainer;
+            EmbedFooterBuilder footer = new EmbedFooterBuilder() { Text = argContainer.TargetBotVarCollection.ToString() };
+            switch (argContainer.mode)
             {
                 case CommandMode.save:
                     return execute_saveAllBotVars(context);
                 case CommandMode.list:
-                    return execute_listBotVars(context);
+                    return execute_listBotVars(context, argContainer);
                 case CommandMode.get:
-                    return execute_getBotVar(context, footer);
+                    return execute_getBotVar(context, footer, argContainer);
                 case CommandMode.set:
-                    return execute_setBotVar(context, footer);
+                    return execute_setBotVar(context, footer, argContainer);
                 case CommandMode.delete:
-                    return execute_deleteBotVar(context);
+                    return execute_deleteBotVar(context, argContainer);
                 default:
                     return Task.CompletedTask;
             }
         }
 
-        private Task execute_deleteBotVar(IDMCommandContext context)
+        private Task execute_deleteBotVar(IDMCommandContext context, ArgumentContainer argContainer)
         {
-            TargetBotVarCollection.DeleteBotVar(BotVarId);
-            return context.Channel.SendEmbedAsync($"Deleted Bot Variable `{BotVarId}`");
+            argContainer.TargetBotVarCollection.DeleteBotVar(argContainer.BotVarId);
+            return context.Channel.SendEmbedAsync($"Deleted Bot Variable `{argContainer.BotVarId}`");
         }
 
-        private Task execute_setBotVar(IDMCommandContext context, EmbedFooterBuilder footer)
+        private Task execute_setBotVar(IDMCommandContext context, EmbedFooterBuilder footer, ArgumentContainer argContainer)
         {
-            TargetBotVarCollection.SetBotVar(BotVar);
+            argContainer.TargetBotVarCollection.SetBotVar(argContainer.BotVar);
             EmbedBuilder setembed = new EmbedBuilder()
             {
                 Color = BotCore.EmbedColor,
-                Title = $"Set Bot Variable \"{BotVarId}\" to:",
-                Description = BotVar.ToString(),
+                Title = $"Set Bot Variable \"{argContainer.BotVarId}\" to:",
+                Description = argContainer.BotVar.ToString(),
                 Footer = footer
             };
             return context.Channel.SendEmbedAsync(setembed);
         }
 
-        private Task execute_getBotVar(IDMCommandContext context, EmbedFooterBuilder footer)
+        private Task execute_getBotVar(IDMCommandContext context, EmbedFooterBuilder footer, ArgumentContainer argContainer)
         {
             EmbedBuilder embed = new EmbedBuilder()
             {
                 Color = BotCore.EmbedColor,
-                Title = $"Bot Variable \"{BotVarId}\"",
-                Description = BotVar.ToString(),
+                Title = $"Bot Variable \"{argContainer.BotVarId}\"",
+                Description = argContainer.BotVar.ToString(),
                 Footer = footer
             };
             return context.Channel.SendEmbedAsync(embed);
@@ -282,16 +288,16 @@ namespace BotCoreNET.CommandHandling.Commands
             await context.Channel.SendEmbedAsync("Saved all bot variables");
         }
 
-        private Task execute_listBotVars(IDMCommandContext context)
+        private Task execute_listBotVars(IDMCommandContext context, ArgumentContainer argContainer)
         {
-            List<EmbedFieldBuilder> embedFields = TargetBotVarCollection.GetBotVarList();
+            List<EmbedFieldBuilder> embedFields = argContainer.TargetBotVarCollection.GetBotVarList();
             if (embedFields.Count == 0)
             {
-                return context.Channel.SendEmbedAsync(new EmbedBuilder() { Title = $"{TargetBotVarCollection} - 0", Color = BotCore.EmbedColor, Description = "None" });
+                return context.Channel.SendEmbedAsync(new EmbedBuilder() { Title = $"{argContainer.TargetBotVarCollection} - 0", Color = BotCore.EmbedColor, Description = "None" });
             }
             else
             {
-                return context.Channel.SendSafeEmbedList($"{TargetBotVarCollection} - {embedFields.Count}", embedFields);
+                return context.Channel.SendSafeEmbedList($"{argContainer.TargetBotVarCollection} - {embedFields.Count}", embedFields);
             }
         }
 

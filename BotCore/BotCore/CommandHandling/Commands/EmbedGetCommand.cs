@@ -27,10 +27,13 @@ namespace BotCoreNET.CommandHandling.Commands
             Register(identifier, collection);
         }
 
-        private SocketGuild guild;
-        private SocketTextChannel channel;
-        private IMessage message;
-        private List<ExecutionOptions> options = new List<ExecutionOptions>();
+        private class ArgumentContainer
+        {
+            public SocketGuild guild;
+            public SocketTextChannel channel;
+            public IMessage message;
+            public HashSet<ExecutionOptions> options = new HashSet<ExecutionOptions>();
+        }
 
         public override HandledContexts ArgumentParserMethod => HandledContexts.DMOnly;
 
@@ -39,6 +42,8 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override async Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
+            ArgumentContainer argOut = new ArgumentContainer();
+
             if (!context.Arguments.First.StartsWith("https://discordapp.com/channels/") || context.Arguments.First.Length < 40)
             {
                 return new ArgumentParseResult(Arguments[0], "Not a valid message link! Failed Startswith or length test");
@@ -56,17 +61,17 @@ namespace BotCoreNET.CommandHandling.Commands
                 return new ArgumentParseResult(Arguments[0], "Not a valid message link! Failed id parse test");
             }
 
-            guild = BotCore.Client.GetGuild(guildId);
+            argOut.guild = BotCore.Client.GetGuild(guildId);
 
-            if (guild != null)
+            if (argOut.guild != null)
             {
-                channel = guild.GetTextChannel(channelId);
+                argOut.channel = argOut.guild.GetTextChannel(channelId);
 
-                if (channel != null)
+                if (argOut.channel != null)
                 {
-                    message = await channel.GetMessageAsync(messageId);
+                    argOut.message = await argOut.channel.GetMessageAsync(messageId);
 
-                    if (message == null)
+                    if (argOut.message == null)
                     {
                         return new ArgumentParseResult(Arguments[0], "Found correct guild and correct channel, but not correct message! Has the message been deleted?");
                     }
@@ -81,7 +86,6 @@ namespace BotCoreNET.CommandHandling.Commands
                 return new ArgumentParseResult(Arguments[0], "Could not find the correct guild!");
             }
 
-            options.Clear();
             if (context.Arguments.TotalCount > 1)
             {
 
@@ -92,10 +96,7 @@ namespace BotCoreNET.CommandHandling.Commands
                 {
                     if (Enum.TryParse(arg, out ExecutionOptions option))
                     {
-                        if (!options.Contains(option))
-                        {
-                            options.Add(option);
-                        }
+                        argOut.options.Add(option);
                     }
                     else
                     {
@@ -110,17 +111,19 @@ namespace BotCoreNET.CommandHandling.Commands
                     return new ArgumentParseResult(Arguments[1], $"Not a valid execution option! Available are: `{ string.Join(", ", Enum.GetNames(typeof(ExecutionOptions))) }`");
                 }
             }
-            return ArgumentParseResult.SuccessfullParse;
+            return new ArgumentParseResult(argOut);
         }
 
-        protected override async Task Execute(IDMCommandContext context)
+        protected override async Task Execute(IDMCommandContext context, object argObject)
         {
-            JSONContainer json = EmbedHelper.GetJSONFromUserMessage(message);
+            ArgumentContainer args = argObject as ArgumentContainer;
 
-            IReadOnlyCollection<IAttachment> attachments = message.Attachments;
+            JSONContainer json = EmbedHelper.GetJSONFromUserMessage(args.message);
 
-            bool pretty = options.Contains(ExecutionOptions.pretty);
-            bool remove = options.Contains(ExecutionOptions.remove);
+            IReadOnlyCollection<IAttachment> attachments = args.message.Attachments;
+
+            bool pretty = args.options.Contains(ExecutionOptions.pretty);
+            bool remove = args.options.Contains(ExecutionOptions.remove);
 
             EmbedBuilder embed;
             if (pretty)
@@ -129,7 +132,7 @@ namespace BotCoreNET.CommandHandling.Commands
                 embed = new EmbedBuilder()
                 {
                     Color = BotCore.EmbedColor,
-                    Title = $"Message JSON for original message in {guild.Name} - {channel.Name} by {message.Author}",
+                    Title = $"Message JSON for original message in {args.guild.Name} - {args.channel.Name} by {args.message.Author}",
                     Description = ("```json\n" + json.Build(true).Replace("```", "[3`]")).MaxLength(EmbedHelper.EMBEDDESCRIPTION_MAX - 8) + "```",
                 };
             }
@@ -138,7 +141,7 @@ namespace BotCoreNET.CommandHandling.Commands
                 embed = new EmbedBuilder()
                 {
                     Color = BotCore.EmbedColor,
-                    Title = $"Message JSON for original message in {guild.Name} - {channel.Name} by {message.Author}",
+                    Title = $"Message JSON for original message in {args.guild.Name} - {args.channel.Name} by {args.message.Author}",
                     Footer = new EmbedFooterBuilder()
                     {
                         Text = json.Build(false).MaxLength(EmbedHelper.EMBEDFOOTERTEXT_MAX)
@@ -164,7 +167,7 @@ namespace BotCoreNET.CommandHandling.Commands
             {
                 try
                 {
-                    await channel.DeleteMessageAsync(message);
+                    await args.channel.DeleteMessageAsync(args.message);
                 }
                 catch (Exception e)
                 {

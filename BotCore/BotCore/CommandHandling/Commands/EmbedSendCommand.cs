@@ -17,10 +17,12 @@ namespace BotCoreNET.CommandHandling.Commands
         public override Precondition[] ExecutePreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
         public override Precondition[] ViewPreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
 
-
-        private SocketTextChannel channel;
-        string messageContent = string.Empty;
-        private EmbedBuilder embed;
+        private class ArgumentContainer
+        {
+            public SocketTextChannel channel;
+            public string messageContent = string.Empty;
+            public EmbedBuilder embed;
+        }
 
         public override HandledContexts ArgumentParserMethod => HandledContexts.GuildOnly;
 
@@ -34,7 +36,9 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override Task<ArgumentParseResult> ParseArgumentsGuildAsync(IGuildCommandContext context)
         {
-            if (!ArgumentParsing.TryParseGuildTextChannel(context, context.Arguments.First, out channel))
+            ArgumentContainer argOut = new ArgumentContainer();
+
+            if (!ArgumentParsing.TryParseGuildTextChannel(context, context.Arguments.First, out argOut.channel))
             {
                 return Task.FromResult(new ArgumentParseResult(Arguments[0], "Failed to parse to a guild text channel!"));
             }
@@ -46,9 +50,9 @@ namespace BotCoreNET.CommandHandling.Commands
 
                 if (JSONContainer.TryParse(embedText, out JSONContainer json, out string errormessage))
                 {
-                    if (EmbedHelper.TryGetMessageFromJSONObject(json, out embed, out messageContent, out string error))
+                    if (EmbedHelper.TryGetMessageFromJSONObject(json, out argOut.embed, out argOut.messageContent, out string error))
                     {
-                        return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                        return Task.FromResult(new ArgumentParseResult(argOut));
                     }
                     else
                     {
@@ -62,32 +66,33 @@ namespace BotCoreNET.CommandHandling.Commands
             }
             else
             {
-                embed = null;
                 return Task.FromResult(new ArgumentParseResult("Internal Error: " + Macros.GetCodeLocation()));
             }
         }
 
 
-        protected override async Task Execute(IDMCommandContext context)
+        protected override async Task Execute(IDMCommandContext context, object argObj)
         {
-            if (embed == null && messageContent != null)
+            ArgumentContainer args = argObj as ArgumentContainer;
+
+            if (args.embed == null && args.messageContent != null)
             {
-                await channel.SendMessageAsync(messageContent);
+                await args.channel.SendMessageAsync(args.messageContent);
             }
-            else if (embed != null && messageContent == null)
+            else if (args.embed != null && args.messageContent == null)
             {
-                await channel.SendEmbedAsync(embed);
+                await args.channel.SendEmbedAsync(args.embed);
             }
-            else if (embed != null && messageContent != null)
+            else if (args.embed != null && args.messageContent != null)
             {
-                await channel.SendMessageAsync(text: messageContent, embed: embed.Build());
+                await args.channel.SendMessageAsync(text: args.messageContent, embed: args.embed.Build());
             }
             else
             {
                 await context.Channel.SendEmbedAsync("The json you provided had no information or could not be parsed!", true);
                 return;
             }
-            await context.Channel.SendEmbedAsync("Done. Check it out here: " + channel.Mention);
+            await context.Channel.SendEmbedAsync("Done. Check it out here: " + args.channel.Mention);
         }
     }
 }

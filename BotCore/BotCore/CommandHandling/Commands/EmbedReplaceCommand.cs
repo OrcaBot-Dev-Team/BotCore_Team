@@ -15,10 +15,14 @@ namespace BotCoreNET.CommandHandling.Commands
             new Argument("EmbedJSON", "The embed, formatted as a JSON", multiple: true)
         };
 
-        private IUserMessage message;
-        private string messageContent;
-        private EmbedBuilder embed;
+        private class ArgumentContainer
+        {
+            public IUserMessage message;
+            public string messageContent;
+            public EmbedBuilder embed;
+        }
 
+        
         public override HandledContexts ArgumentParserMethod => HandledContexts.GuildOnly;
 
         public override HandledContexts ExecutionMethod => HandledContexts.DMOnly;
@@ -33,6 +37,8 @@ namespace BotCoreNET.CommandHandling.Commands
 
         protected override async Task<ArgumentParseResult> ParseArgumentsGuildAsync(IGuildCommandContext context)
         {
+            ArgumentContainer argOut = new ArgumentContainer();
+
             if (!context.Arguments.First.StartsWith("https://discordapp.com/channels/") || context.Arguments.First.Length < 40)
             {
                 return new ArgumentParseResult(Arguments[0], "Not a valid message link! Failed Startswith or length test");
@@ -58,13 +64,13 @@ namespace BotCoreNET.CommandHandling.Commands
 
                 if (channel != null)
                 {
-                    message = await channel.GetMessageAsync(messageId) as IUserMessage;
+                    argOut.message = await channel.GetMessageAsync(messageId) as IUserMessage;
 
-                    if (message == null)
+                    if (argOut.message == null)
                     {
                         return new ArgumentParseResult(Arguments[0], "Found correct guild and correct channel, but not correct message! Has the message been deleted?");
                     }
-                    else if (message.Author.Id != BotCore.Client.CurrentUser.Id)
+                    else if (argOut.message.Author.Id != BotCore.Client.CurrentUser.Id)
                     {
                         return new ArgumentParseResult(Arguments[0], "Can not edit a message the bot didn't post itself");
                     }
@@ -86,9 +92,9 @@ namespace BotCoreNET.CommandHandling.Commands
 
                 if (JSONContainer.TryParse(embedText, out JSONContainer json, out string errormessage))
                 {
-                    if (EmbedHelper.TryGetMessageFromJSONObject(json, out embed, out messageContent, out string error))
+                    if (EmbedHelper.TryGetMessageFromJSONObject(json, out argOut.embed, out argOut.messageContent, out string error))
                     {
-                        return ArgumentParseResult.SuccessfullParse;
+                        return new ArgumentParseResult(argOut);
                     }
                     else
                     {
@@ -102,16 +108,17 @@ namespace BotCoreNET.CommandHandling.Commands
             }
             else
             {
-                embed = null;
                 return new ArgumentParseResult("Internal Error: " + Macros.GetCodeLocation());
             }
         }
 
-        protected override async Task Execute(IDMCommandContext context)
+        protected override async Task Execute(IDMCommandContext context, object argObj)
         {
-            await message.ModifyAsync(message =>
+            ArgumentContainer args = argObj as ArgumentContainer;
+
+            await args.message.ModifyAsync(message =>
             {
-                message.Content = messageContent; message.Embed = embed?.Build();
+                message.Content = args.messageContent; message.Embed = args.embed?.Build();
             });
             await context.Channel.SendEmbedAsync("Edit done!");
         }

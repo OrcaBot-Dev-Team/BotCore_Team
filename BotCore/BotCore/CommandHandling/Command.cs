@@ -94,17 +94,19 @@ namespace BotCoreNET.CommandHandling
             throw new UnpopulatedMethodException();
         }
 
-        protected virtual Task Execute(IDMCommandContext context)
+        protected virtual Task Execute(IDMCommandContext context, object parsedArgs)
         {
             throw new UnpopulatedMethodException();
         }
 
-        protected virtual Task ExecuteGuild(IGuildCommandContext context)
+        protected virtual Task ExecuteGuild(IGuildCommandContext context, object parsedArgs)
         {
             throw new UnpopulatedMethodException();
         }
 
-        internal async Task HandleCommandAsync(IDMCommandContext context, IGuildCommandContext guildContext)
+
+
+        internal async Task HandleCommandAsync(IDMCommandContext context, IGuildCommandContext guildContext, bool runningAsync = false)
         {
             string stage = "Checking Preconditions";
             try
@@ -116,7 +118,7 @@ namespace BotCoreNET.CommandHandling
                     if (parseResult.Success)
                     {
                         stage = "Executing Command";
-                        await execute(context, guildContext);
+                        await execute(context, guildContext, parseResult.ParseResult);
                     }
                     else
                     {
@@ -144,60 +146,60 @@ namespace BotCoreNET.CommandHandling
             }
         }
 
-        private Task execute(IDMCommandContext context, IGuildCommandContext guildContext)
+        private Task execute(IDMCommandContext context, IGuildCommandContext guildContext, object parsedArgs)
         {
             if (RunInAsyncMode)
-                return executeAsyncMode(context, guildContext);
+                return executeAsyncMode(context, guildContext, parsedArgs);
             else
             {
-                return executeSyncMode(context, guildContext);
+                return executeSyncMode(context, guildContext, parsedArgs);
             }
         }
 
-        private Task executeSyncMode(IDMCommandContext context, IGuildCommandContext guildContext)
+        private Task executeSyncMode(IDMCommandContext context, IGuildCommandContext guildContext, object parsedArgs)
         {
             switch (ExecutionMethod)
             {
                 case HandledContexts.None:
                     return context.Channel.SendEmbedAsync("INTERNAL ERROR", true);
                 case HandledContexts.DMOnly:
-                    return Execute(context);
+                    return Execute(context, parsedArgs);
                 case HandledContexts.GuildOnly:
-                    return ExecuteGuild(guildContext);
+                    return ExecuteGuild(guildContext, parsedArgs);
                 case HandledContexts.Both:
                     if (context.IsGuildContext)
                     {
-                        return ExecuteGuild(guildContext);
+                        return ExecuteGuild(guildContext, parsedArgs);
                     }
                     else
                     {
-                        return Execute(context);
+                        return Execute(context, parsedArgs);
                     }
                 default:
                     return Task.CompletedTask;
             }
         }
 
-        private Task executeAsyncMode(IDMCommandContext context, IGuildCommandContext guildContext)
+        private Task executeAsyncMode(IDMCommandContext context, IGuildCommandContext guildContext, object parsedArgs)
         {
             switch (ExecutionMethod)
             {
                 case HandledContexts.None:
                     return context.Channel.SendEmbedAsync("INTERNAL ERROR", true);
                 case HandledContexts.DMOnly:
-                    AsyncCommandContainer.NewAsyncCommand(Execute, context);
+                    AsyncCommandContainer.NewAsyncCommand(Execute, context, parsedArgs);
                     break;
                 case HandledContexts.GuildOnly:
-                    AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext);
+                    AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext, parsedArgs);
                     break;
                 case HandledContexts.Both:
                     if (context.IsGuildContext)
                     {
-                        AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext);
+                        AsyncCommandContainer.NewAsyncCommand(ExecuteGuild, guildContext, parsedArgs);
                     }
                     else
                     {
-                        AsyncCommandContainer.NewAsyncCommand(Execute, context);
+                        AsyncCommandContainer.NewAsyncCommand(Execute, context, parsedArgs);
                     }
                     break;
             }

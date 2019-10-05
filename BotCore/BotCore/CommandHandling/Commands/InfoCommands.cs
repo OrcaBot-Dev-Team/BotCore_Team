@@ -35,7 +35,7 @@ namespace BotCoreNET.CommandHandling.Commands
             Register("about");
         }
 
-        protected override Task Execute(IDMCommandContext context)
+        protected override Task Execute(IDMCommandContext context, object argObj)
         {
             if (AboutEmbed.Author == null)
             {

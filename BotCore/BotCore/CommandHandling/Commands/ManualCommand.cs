@@ -20,42 +20,45 @@ namespace BotCoreNET.CommandHandling.Commands
             Register(identifier);
         }
 
-        private string identifier;
-        private Command command;
-        private CommandCollection collection;
+        private class ArgumentContainer
+        {
+            public string identifier;
+            public Command command;
+            public CommandCollection collection;
+        }
 
         protected override Task<ArgumentParseResult> ParseArguments(IDMCommandContext context)
         {
-            command = null;
-            collection = null;
-            identifier = null;
+            ArgumentContainer argOut = new ArgumentContainer();
 
             if (context.Arguments.TotalCount == 0)
             {
                 return Task.FromResult(ArgumentParseResult.DefaultNoArguments);
             }
 
-            identifier = context.Arguments.First;
-            if (!CommandCollection.TryFindCommand(identifier, out command))
+            argOut.identifier = context.Arguments.First;
+            if (!CommandCollection.TryFindCommand(argOut.identifier, out argOut.command))
             {
-                if (!CommandCollection.AllCollections.TryFind(collection => { return collection.Name.ToLower() == identifier.ToLower(); }, out collection))
+                if (!CommandCollection.AllCollections.TryFind(collection => { return collection.Name.ToLower() == argOut.identifier.ToLower(); }, out argOut.collection))
                 {
-                    return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+                    return Task.FromResult(new ArgumentParseResult(argOut));
                 }
             }
 
-            return Task.FromResult(ArgumentParseResult.SuccessfullParse);
+            return Task.FromResult(new ArgumentParseResult(argOut));
         }
 
-        protected override Task Execute(IDMCommandContext context)
+        protected override Task Execute(IDMCommandContext context, object argObj)
         {
-            if (collection != null)
+            ArgumentContainer args = argObj as ArgumentContainer;
+
+            if (args.collection != null)
             {
-                return CommandManual.SendCommandCollectionHelp(context, collection);
+                return CommandManual.SendCommandCollectionHelp(context, args.collection);
             }
-            else if (command != null)
+            else if (args.command != null)
             {
-                return CommandManual.SendCommandHelp(context, command);
+                return CommandManual.SendCommandHelp(context, args.command);
             }
             else
             {
