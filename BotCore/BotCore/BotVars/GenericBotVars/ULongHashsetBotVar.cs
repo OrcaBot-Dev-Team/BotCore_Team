@@ -9,7 +9,7 @@ namespace BotCoreNET.BotVars.GenericBotVars
 {
     public class ULongHashsetBotVar : IGenericBotVar, ISet<ulong>
     {
-        private HashSet<ulong> hashset = new HashSet<ulong>();
+        internal HashSet<ulong> hashset = new HashSet<ulong>();
 
         #region redirects
         public int Count => ((ISet<ulong>)hashset).Count;

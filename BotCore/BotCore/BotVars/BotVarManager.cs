@@ -67,7 +67,13 @@ namespace BotCoreNET.BotVars
             return result;
         }
 
-    }
+        public delegate void BotVarCollectionDelegate(BotVarCollection botVarCollection);
 
-    public delegate void BotVarUpdated(BotVar updated);
+        internal static void InvokeOnGuildBotVarCollectionLoaded(BotVarCollection botVarCollection)
+        {
+            OnGuildBotVarCollectionLoaded?.Invoke(botVarCollection);
+        }
+
+        public static event BotVarCollectionDelegate OnGuildBotVarCollectionLoaded;
+    }
 }

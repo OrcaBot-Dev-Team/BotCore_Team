@@ -293,4 +293,98 @@ namespace BotCoreNET.CommandHandling
         /// </summary>
         Both
     }
+
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    [Obsolete]
+    public sealed class CommandAttribute : Attribute
+    {
+        private const int UNLIMITEDARGS = int.MaxValue;
+
+        public readonly Precondition[] ExecutePreconditions;
+        public readonly Precondition[] ViewPreconditions;
+        public readonly Argument[] Arguments;
+        public readonly HandledContexts ArgumentParserMethod;
+        public readonly HandledContexts ExecutionMethod;
+        public readonly string Identifier;
+        public readonly string Summary;
+        public readonly string Remarks;
+        public readonly string Link;
+        public readonly bool RunInAsyncMode;
+        public readonly bool IsShitposting;
+        public readonly int MinimumArgumentCount;
+        public readonly int MaximumArgumentCount;
+        public readonly bool RequireGuildContext;
+        public readonly CommandCollection Collection;
+
+        // Properties
+        public string Syntax => MessageHandler.CommandParser.CommandSyntax(Identifier);
+        public string FullSyntax => MessageHandler.CommandParser.CommandSyntax(Identifier, Arguments);
+
+        public CommandAttribute(CommandProperties properties)
+        {
+            if (properties.ExecutePreconditions == null || properties.ViewPreconditions == null || properties.Arguments == null || properties.Summary == null)
+            {
+                throw new ArgumentNullException(nameof(properties));
+            }
+
+            Identifier = properties.Identifier;
+            Summary = properties.Summary;
+            Remarks = properties.Remarks;
+            Link = properties.Link;
+            RunInAsyncMode = properties.RunInAsyncMode;
+            IsShitposting = properties.IsShitposting;
+
+            if (Arguments.Length == 0)
+            {
+                MinimumArgumentCount = 0;
+                MaximumArgumentCount = 0;
+            }
+            else
+            {
+                MaximumArgumentCount = Arguments.Length;
+                bool lastArgOptional = true;
+                for (int i = Arguments.Length - 1; i >= 0; i--)
+                {
+                    if (lastArgOptional && !Arguments[i].Optional)
+                    {
+                        lastArgOptional = false;
+                        MinimumArgumentCount = i + 1;
+                    }
+                    if (Arguments[i].Multiple)
+                    {
+                        MaximumArgumentCount = UNLIMITEDARGS;
+                    }
+                }
+            }
+
+            RequireGuildContext = ArgumentParserMethod == HandledContexts.GuildOnly || ExecutionMethod == HandledContexts.GuildOnly || ExecutePreconditions.Any(cond => { return cond.RequireGuild; }) || ViewPreconditions.Any(cond => { return cond.RequireGuild; });
+        }
+
+        [Obsolete]
+        public class CommandProperties
+        {
+            public static string test;
+
+            public readonly string Identifier;
+            public readonly string Summary;
+            public readonly string Collection;
+
+            public Argument[] Arguments = new Argument[0];
+            public Precondition[] ExecutePreconditions = new Precondition[0];
+            public Precondition[] ViewPreconditions = new Precondition[0];
+            public string Remarks = null;
+            public string Link = null;
+            public bool RunInAsyncMode = false;
+            public bool IsShitposting = false;
+
+            public CommandProperties(string identifier, string summary, string collection = null)
+            {
+                Identifier = identifier;
+                Summary = summary;
+                Collection = collection;
+
+
+            }
+        }
+    }
 }

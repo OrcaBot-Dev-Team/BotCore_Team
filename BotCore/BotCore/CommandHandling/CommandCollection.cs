@@ -69,6 +69,11 @@ namespace BotCoreNET.CommandHandling
             }
         }
 
+        public static bool TryGetCommandCollection(string name, out CommandCollection collection)
+        {
+            return collectionDict.TryGetValue(name, out collection);
+        }
+
         #endregion
         #region instance
 

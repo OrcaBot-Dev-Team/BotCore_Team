@@ -132,7 +132,7 @@ namespace BotCoreNET.CommandHandling
     {
         private const string DESCR = "Be Guildowner or Admin!";
 
-        public IsOwnerOrAdminPrecondition() : base(true, DESCR)
+        public IsOwnerOrAdminPrecondition(bool overrideAsBotAdmin = false) : base(true, DESCR, overrideAsBotAdmin)
         {
         }
 

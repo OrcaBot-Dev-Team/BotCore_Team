@@ -233,7 +233,11 @@ namespace BotCoreNET.CommandHandling.Commands
         protected override Task Execute(IDMCommandContext context, object args)
         {
             ArgumentContainer argContainer = args as ArgumentContainer;
-            EmbedFooterBuilder footer = new EmbedFooterBuilder() { Text = argContainer.TargetBotVarCollection.ToString() };
+            EmbedFooterBuilder footer = null;
+            if (argContainer.TargetBotVarCollection != null)
+            {
+                footer = new EmbedFooterBuilder() { Text = argContainer.TargetBotVarCollection.ToString() };
+            }
             switch (argContainer.mode)
             {
                 case CommandMode.save:

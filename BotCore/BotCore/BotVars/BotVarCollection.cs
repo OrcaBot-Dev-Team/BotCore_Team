@@ -477,6 +477,7 @@ namespace BotCoreNET.BotVars
                     {
                         FromJSON(json);
                     }
+                    BotVarManager.InvokeOnGuildBotVarCollectionLoaded(this);
                     return true;
                 }
             }

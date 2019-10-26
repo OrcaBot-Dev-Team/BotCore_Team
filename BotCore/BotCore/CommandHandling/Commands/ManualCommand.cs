@@ -52,18 +52,18 @@ namespace BotCoreNET.CommandHandling.Commands
         {
             ArgumentContainer args = argObj as ArgumentContainer;
 
-            if (args.collection != null)
+            if (args != null)
             {
-                return CommandManual.SendCommandCollectionHelp(context, args.collection);
+                if (args.collection != null)
+                {
+                    return CommandManual.SendCommandCollectionHelp(context, args.collection);
+                }
+                else if (args.command != null)
+                {
+                    return CommandManual.SendCommandHelp(context, args.command);
+                }
             }
-            else if (args.command != null)
-            {
-                return CommandManual.SendCommandHelp(context, args.command);
-            }
-            else
-            {
-                return CommandManual.SendHelpList(context);
-            }
+            return CommandManual.SendHelpList(context);
         }
     }
 }

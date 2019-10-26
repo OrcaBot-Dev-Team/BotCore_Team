@@ -17,7 +17,7 @@ namespace BotCoreNET
         public static Color ErrorColor = new Color(255, 0, 0);
 
         internal static ULongHashsetBotVar botAdmins = new ULongHashsetBotVar();
-        public static IReadOnlyCollection<ulong> BotAdmins = botAdmins as IReadOnlyCollection<ulong>;
+        public static IReadOnlyCollection<ulong> BotAdmins = botAdmins.hashset as IReadOnlyCollection<ulong>;
 
 #if DEBUG
 
@@ -35,6 +35,7 @@ namespace BotCoreNET
             Client = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 LogLevel = LogSeverity.Info,
+                MessageCacheSize = 1024
             });
             Client.Log += Log;
 
@@ -185,7 +186,7 @@ namespace BotCoreNET
             MessageHandler.SetupBotVarSubscription();
             ExceptionHandler.SetupBotVar();
 
-            OnBotVarDefaultSetup();
+            OnBotVarDefaultSetup?.Invoke();
         }
 
         private static void OnBotVarUpdated(ulong guildId, BotVar var)
