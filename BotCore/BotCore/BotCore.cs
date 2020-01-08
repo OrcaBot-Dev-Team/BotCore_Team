@@ -16,6 +16,8 @@ namespace BotCoreNET
         public static Color EmbedColor = new Color(255, 255, 255);
         public static Color ErrorColor = new Color(255, 0, 0);
 
+        public const string ADMINROLE_BOTVARID = "AdminRole";
+
         internal static ULongHashsetBotVar botAdmins = new ULongHashsetBotVar();
         public static IReadOnlyCollection<ulong> BotAdmins = botAdmins.hashset as IReadOnlyCollection<ulong>;
 

@@ -26,9 +26,9 @@ namespace BotCoreNET.CommandHandling.Commands
         public override HandledContexts ArgumentParserMethod => HandledContexts.GuildOnly;
 
         public override HandledContexts ExecutionMethod => HandledContexts.DMOnly;
-        public override Precondition[] ExecutePreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
-        public override Precondition[] ViewPreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
-
+        private static readonly Precondition[] PRECONDITIONS = new Precondition[] { new HasRolePrecondition(BotCore.ADMINROLE_BOTVARID) };
+        public override Precondition[] ExecutePreconditions => PRECONDITIONS;
+        public override Precondition[] ViewPreconditions => PRECONDITIONS;
 
         public EmbedReplaceCommand(string identifier, CommandCollection collection) : base()
         {

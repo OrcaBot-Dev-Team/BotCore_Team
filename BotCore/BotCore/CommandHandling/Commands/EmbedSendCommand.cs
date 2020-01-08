@@ -14,8 +14,9 @@ namespace BotCoreNET.CommandHandling.Commands
             new Argument("Channel", ArgumentParsing.GENERIC_PARSED_CHANNEL),
             new Argument("EmbedJSON", "The embed, formatted as a JSON", multiple: true)
         };
-        public override Precondition[] ExecutePreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
-        public override Precondition[] ViewPreconditions => new Precondition[] { new IsOwnerOrAdminPrecondition() };
+        private static readonly Precondition[] PRECONDITIONS = new Precondition[] { new HasRolePrecondition(BotCore.ADMINROLE_BOTVARID) };
+        public override Precondition[] ExecutePreconditions => PRECONDITIONS;
+        public override Precondition[] ViewPreconditions => PRECONDITIONS;
 
         private class ArgumentContainer
         {
