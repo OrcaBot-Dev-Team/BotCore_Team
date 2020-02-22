@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <ApplicationIcon />
     <StartupObject />
     <RootNamespace>BotCoreNET</RootNamespace>
@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Reference Include="JSON_Serialization">
-      <HintPath>..\..\..\JSONParser\JSON_Serialization.dll</HintPath>
+      <HintPath>..\..\..\JSON Parser\JSON_Serialization.dll</HintPath>
     </Reference>
   </ItemGroup>
 
